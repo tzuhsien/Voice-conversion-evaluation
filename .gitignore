@@ -1,0 +1,7 @@
+universal-vocoder/logs/*
+*.ckpt
+*.pt
+*.pyc
+*.pth
+*.pkl
+.python-version

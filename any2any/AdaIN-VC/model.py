@@ -1,23 +1,7 @@
-from math import ceil
-from functools import reduce
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.autograd as ag
 from torch.nn.utils import spectral_norm
-
-
-class DummyEncoder(object):
-    def __init__(self, encoder):
-        self.encoder = encoder
-
-    def load(self, target_network):
-        self.encoder.load_state_dict(target_network.state_dict())
-
-    def __call__(self, x):
-        return self.encoder(x)
 
 
 def pad_layer(inp, layer, pad_type="reflect"):
@@ -26,23 +10,6 @@ def pad_layer(inp, layer, pad_type="reflect"):
         pad = (kernel_size // 2, kernel_size // 2 - 1)
     else:
         pad = (kernel_size // 2, kernel_size // 2)
-    # padding
-    inp = F.pad(inp, pad=pad, mode=pad_type)
-    out = layer(inp)
-    return out
-
-
-def pad_layer_2d(inp, layer, pad_type="reflect"):
-    kernel_size = layer.kernel_size
-    if kernel_size[0] % 2 == 0:
-        pad_lr = [kernel_size[0] // 2, kernel_size[0] // 2 - 1]
-    else:
-        pad_lr = [kernel_size[0] // 2, kernel_size[0] // 2]
-    if kernel_size[1] % 2 == 0:
-        pad_ud = [kernel_size[1] // 2, kernel_size[1] // 2 - 1]
-    else:
-        pad_ud = [kernel_size[1] // 2, kernel_size[1] // 2]
-    pad = tuple(pad_lr + pad_ud)
     # padding
     inp = F.pad(inp, pad=pad, mode=pad_type)
     out = layer(inp)
@@ -62,20 +29,6 @@ def pixel_shuffle_1d(inp, scale_factor=2):
 def upsample(x, scale_factor=2):
     x_up = F.interpolate(x, scale_factor=scale_factor, mode="nearest")
     return x_up
-
-
-def flatten(x):
-    out = x.contiguous().view(x.size(0), x.size(1) * x.size(2))
-    return out
-
-
-def concat_cond(x, cond):
-    # x = [batch_size, x_channels, length]
-    # cond = [batch_size, c_channels]
-    cond = cond.unsqueeze(dim=2)
-    cond = cond.expand(*cond.size()[:-1], x.size(-1))
-    out = torch.cat([x, cond], dim=1)
-    return out
 
 
 def append_cond(x, cond):
@@ -103,141 +56,6 @@ def get_act(act):
         return nn.LeakyReLU()
     else:
         return nn.ReLU()
-
-
-class MLP(nn.Module):
-    def __init__(self, c_in, c_h, n_blocks, act, sn):
-        super(MLP, self).__init__()
-        self.act = get_act(act)
-        self.n_blocks = n_blocks
-        f = spectral_norm if sn else lambda x: x
-        self.in_dense_layer = f(nn.Linear(c_in, c_h))
-        self.first_dense_layers = nn.ModuleList(
-            [f(nn.Linear(c_h, c_h)) for _ in range(n_blocks)]
-        )
-        self.second_dense_layers = nn.ModuleList(
-            [f(nn.Linear(c_h, c_h)) for _ in range(n_blocks)]
-        )
-
-    def forward(self, x):
-        h = self.in_dense_layer(x)
-        for l in range(self.n_blocks):
-            y = self.first_dense_layers[l](h)
-            y = self.act(y)
-            y = self.second_dense_layers[l](y)
-            y = self.act(y)
-            h = h + y
-        return h
-
-
-class Prenet(nn.Module):
-    def __init__(
-        self, c_in, c_h, c_out, kernel_size, n_conv_blocks, subsample, act, dropout_rate
-    ):
-        super(Prenet, self).__init__()
-        self.act = get_act(act)
-        self.subsample = subsample
-        self.n_conv_blocks = n_conv_blocks
-        self.in_conv_layer = nn.Conv2d(1, c_h, kernel_size=kernel_size)
-        self.first_conv_layers = nn.ModuleList(
-            [nn.Conv2d(c_h, c_h, kernel_size=kernel_size) for _ in range(n_conv_blocks)]
-        )
-        self.second_conv_layers = nn.ModuleList(
-            [
-                nn.Conv2d(c_h, c_h, kernel_size=kernel_size, stride=sub)
-                for sub, _ in zip(subsample, range(n_conv_blocks))
-            ]
-        )
-        output_size = c_in
-        for l, sub in zip(range(n_conv_blocks), self.subsample):
-            output_size = ceil(output_size / sub)
-        self.out_conv_layer = nn.Conv1d(c_h * output_size, c_out, kernel_size=1)
-        self.dropout_layer = nn.Dropout(p=dropout_rate)
-        self.norm_layer = nn.InstanceNorm2d(c_h, affine=False)
-
-    def forward(self, x):
-        # reshape x to 4D
-        x = x.contiguous().view(x.size(0), 1, x.size(1), x.size(2))
-        out = pad_layer_2d(x, self.in_conv_layer)
-        out = self.act(out)
-        out = self.norm_layer(out)
-        for l in range(self.n_conv_blocks):
-            y = pad_layer_2d(out, self.first_conv_layers[l])
-            y = self.act(y)
-            y = self.norm_layer(y)
-            y = self.dropout_layer(y)
-            y = pad_layer_2d(y, self.second_conv_layers[l])
-            y = self.act(y)
-            y = self.norm_layer(y)
-            y = self.dropout_layer(y)
-            if self.subsample[l] > 1:
-                out = F.avg_pool2d(out, kernel_size=self.subsample[l], ceil_mode=True)
-            out = y + out
-        out = out.contiguous().view(out.size(0), out.size(1) * out.size(2), out.size(3))
-        out = pad_layer(out, self.out_conv_layer)
-        out = self.act(out)
-        return out
-
-
-class Postnet(nn.Module):
-    def __init__(
-        self, c_in, c_h, c_out, c_cond, kernel_size, n_conv_blocks, upsample, act, sn
-    ):
-        super(Postnet, self).__init__()
-        self.act = get_act(act)
-        self.upsample = upsample
-        self.c_h = c_h
-        self.n_conv_blocks = n_conv_blocks
-        f = spectral_norm if sn else lambda x: x
-        total_upsample = reduce(lambda x, y: x * y, upsample)
-        self.in_conv_layer = f(
-            nn.Conv1d(c_in, c_h * c_out // total_upsample, kernel_size=1)
-        )
-        self.first_conv_layers = nn.ModuleList(
-            [
-                f(nn.Conv2d(c_h, c_h, kernel_size=kernel_size))
-                for _ in range(n_conv_blocks)
-            ]
-        )
-        self.second_conv_layers = nn.ModuleList(
-            [
-                f(nn.Conv2d(c_h, c_h * up * up, kernel_size=kernel_size))
-                for up, _ in zip(upsample, range(n_conv_blocks))
-            ]
-        )
-        self.out_conv_layer = f(nn.Conv2d(c_h, 1, kernel_size=1))
-        self.conv_affine_layers = nn.ModuleList(
-            [f(nn.Linear(c_cond, c_h * 2)) for _ in range(n_conv_blocks * 2)]
-        )
-        self.norm_layer = nn.InstanceNorm2d(c_h, affine=False)
-        self.ps = nn.PixelShuffle(max(upsample))
-
-    def forward(self, x, cond):
-        out = pad_layer(x, self.in_conv_layer)
-        out = out.contiguous().view(
-            out.size(0), self.c_h, out.size(1) // self.c_h, out.size(2)
-        )
-        for l in range(self.n_conv_blocks):
-            y = pad_layer_2d(out, self.first_conv_layers[l])
-            y = self.act(y)
-            y = self.norm_layer(y)
-            y = append_cond_2d(y, self.conv_affine_layers[l * 2](cond))
-            y = pad_layer_2d(y, self.second_conv_layers[l])
-            y = self.act(y)
-            if self.upsample[l] > 1:
-                y = self.ps(y)
-                y = self.norm_layer(y)
-                y = append_cond_2d(y, self.conv_affine_layers[l * 2 + 1](cond))
-                out = y + upsample(
-                    out, scale_factor=(self.upsample[l], self.upsample[l])
-                )
-            else:
-                y = self.norm_layer(y)
-                y = append_cond(y, self.conv_affine_layers[l * 2 + 1](cond))
-                out = y + out
-        out = self.out_conv_layer(out)
-        out = out.squeeze(dim=1)
-        return out
 
 
 class SpeakerEncoder(nn.Module):
@@ -487,6 +305,14 @@ class AE(nn.Module):
         dec = self.decoder(mu, emb)
         return dec
 
-    def get_speaker_embeddings(self, x):
+    def encode_timbre(self, x):
         emb = self.speaker_encoder(x)
         return emb
+
+    def encode_linguistic(self, x):
+        mu, _ = self.content_encoder(x)
+        return mu
+
+    def decode(self, mu, emb):
+        dec = self.decoder(mu, emb)
+        return dec

@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument("--rnn_channels", type=int, default=896)
     parser.add_argument("--fc_channels", type=int, default=512)
     parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--n_steps", type=int, default=100000)
+    parser.add_argument("--n_steps", type=int, default=150000)
     parser.add_argument("--valid_every", type=int, default=1000)
     parser.add_argument("--valid_ratio", type=float, default=0.1)
     parser.add_argument("--save_every", type=int, default=10000)

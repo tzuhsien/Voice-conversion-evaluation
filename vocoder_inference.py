@@ -6,7 +6,7 @@ import random
 import json
 import importlib
 from argparse import ArgumentParser
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import soundfile as sf
 from librosa.util import find_files
@@ -21,8 +21,10 @@ def parse_args():
     parser.add_argument("out_dir", type=str)
     parser.add_argument("-a", "--audio_processor_path", type=str, required=True)
     parser.add_argument("-v", "--vocoder_path", type=str, required=True)
-    parser.add_argument("-n", "--nums", type=int, default=20)
+    parser.add_argument("-n", "--nums", type=int, default=2000)
     parser.add_argument("-b", "--batch_size", type=int, default=20)
+    parser.add_argument("-s", "--source_corpus", type=str, default=None)
+    parser.add_argument("-t", "--target_corpus", type=str, default=None)
     return vars(parser.parse_args())
 
 
@@ -32,10 +34,21 @@ def batch_inference(out_mels, vocoder, batch_size):
     for i in tqdm(range(0, len(out_mels), batch_size)):
         right = i + batch_size if len(out_mels) - i >= batch_size else len(out_mels)
         out_wavs.extend(vocoder.generate(out_mels[i:right]))
+    # for i in tqdm(range(len(out_mels))):
+    #     out_wavs.append(vocoder.generate(out_mels[i].unsqueeze(0)))
     return out_wavs
 
 
-def main(data_dir, out_dir, audio_processor_path, vocoder_path, nums, batch_size):
+def main(
+    data_dir,
+    out_dir,
+    audio_processor_path,
+    vocoder_path,
+    nums,
+    batch_size,
+    source_corpus,
+    target_corpus,
+):
     """Preprocess audio files into features for training."""
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -70,10 +83,20 @@ def main(data_dir, out_dir, audio_processor_path, vocoder_path, nums, batch_size
     save_dir = Path(out_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
 
-    metadata = []
+    metadata = {
+        "source_corpus": source_corpus,
+        "target_corpus": target_corpus,
+        "model": vocoder_path,
+        "audio_processor": audio_processor_path,
+        "pairs": [],
+    }
     for i, (audio_path, waveform) in enumerate(zip(audio_paths, waveforms)):
+        audio_path = PurePosixPath(audio_path)
+        audio_path = audio_path.relative_to(data_dir)
         output_path = save_dir / f"{i:04d}.wav"
-        metadata.append({"original": audio_path, "converted": str(output_path)})
+        metadata["pairs"].append(
+            {"tgt_utts": [str(audio_path)], "converted": f"{i:04d}.wav"}
+        )
         waveform = waveform.detach().cpu().numpy()
         sf.write(output_path, waveform, vocoder.sample_rate)
 

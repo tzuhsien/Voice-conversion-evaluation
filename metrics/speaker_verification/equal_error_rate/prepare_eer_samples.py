@@ -17,6 +17,16 @@ import numpy as np
 from tqdm import tqdm
 
 
+def parse_args():
+    """Parse command-line arguments."""
+    parser = ArgumentParser()
+    parser.add_argument("data_dirs", type=str, nargs="+")
+    parser.add_argument("-n", "--n_sample", type=int, required=True)
+    parser.add_argument("-o", "--output_path", type=str, required=True)
+
+    return vars(parser.parse_args())
+
+
 def generate_sample(metadata, speaker1, speakers, label, nums):
     """
     Calculate cosine similarity.
@@ -40,7 +50,7 @@ def generate_sample(metadata, speaker1, speakers, label, nums):
     return sampels
 
 
-def prepare_eer_samples(data_dirs, output_dir, n_sample):
+def prepare_eer_samples(data_dirs, output_path, n_sample):
     """generate eer samples"""
     metadata = {}
     for data_dir in data_dirs:
@@ -56,12 +66,8 @@ def prepare_eer_samples(data_dirs, output_dir, n_sample):
         samples += generate_sample(metadata, speaker, [speaker], 1, n_sample)
         samples += generate_sample(metadata, speaker, negative_speakers, 0, n_sample)
 
-    joblib.dump(samples, output_dir)
+    joblib.dump(samples, output_path)
 
 
 if __name__ == "__main__":
-    PARSER = ArgumentParser()
-    PARSER.add_argument("data_dirs", type=str, nargs="+")
-    PARSER.add_argument("-n", "--n_sample", type=int, required=True)
-    PARSER.add_argument("-o", "--output_dir", type=str, required=True)
-    prepare_eer_samples(**vars(PARSER.parse_args()))
+    prepare_eer_samples(**parse_args())

@@ -9,6 +9,15 @@ from tqdm import tqdm
 from resemblyzer import preprocess_wav, VoiceEncoder
 
 
+def parse_args():
+    """Parse command-line arguments."""
+    parser = ArgumentParser()
+    parser.add_argument("data_dirs", type=str, nargs="+")
+    parser.add_argument("-o", "--output_dir", type=str, required=True)
+
+    return vars(parser.parse_args())
+
+
 def extract(data_dirs, output_dir):
     """Extract embedding by resemblyzer."""
     encoder = VoiceEncoder()
@@ -34,7 +43,4 @@ def extract(data_dirs, output_dir):
 
 
 if __name__ == "__main__":
-    PARSER = ArgumentParser()
-    PARSER.add_argument("data_dirs", type=str, nargs="+")
-    PARSER.add_argument("-o", "--output_dir", type=str, required=True)
-    extract(**vars(PARSER.parse_args()))
+    extract(**parse_args())

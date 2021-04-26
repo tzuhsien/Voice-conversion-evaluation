@@ -2,14 +2,12 @@
 """Preprocess script"""
 
 import warnings
-import random
 import json
-import importlib
+from importlib import import_module
 from argparse import ArgumentParser
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 import soundfile as sf
-from librosa.util import find_files
 from tqdm import tqdm
 import torch
 
@@ -23,8 +21,8 @@ def parse_args():
     parser.add_argument("-v", "--vocoder_path", type=str, required=True)
     parser.add_argument("-n", "--nums", type=int, default=2000)
     parser.add_argument("-b", "--batch_size", type=int, default=20)
-    parser.add_argument("-s", "--source_corpus", type=str, default=None)
-    parser.add_argument("-t", "--target_corpus", type=str, default=None)
+    parser.add_argument("-c", "--corpus_name", type=str)
+    parser.add_argument("-p", "--parser_dir", type=str)
     return vars(parser.parse_args())
 
 
@@ -46,36 +44,56 @@ def main(
     vocoder_path,
     nums,
     batch_size,
-    source_corpus,
-    target_corpus,
+    corpus_name,
+    parser_dir,
 ):
     """Preprocess audio files into features for training."""
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    audio_paths = find_files(data_dir)
     audio_processor_path = Path(audio_processor_path) / "audioprocessor"
     audio_processor_path = str(audio_processor_path).replace("/", ".")
-    audioprocessor = getattr(
-        importlib.import_module(audio_processor_path), "AudioProcessor"
-    )
+    audioprocessor = getattr(import_module(audio_processor_path), "AudioProcessor")
     print(f"[INFO]: audioprocessor is loaded from {str(audio_processor_path)}.")
 
     vocoder = torch.jit.load(vocoder_path).to(device)
     print(f"[INFO]: Vocoder is loaded from {vocoder_path}.")
     assert vocoder.sample_rate == audioprocessor.sample_rate
-    random.seed(531)
-    try:
-        audio_paths = random.sample(audio_paths, nums)
-    except ValueError:
-        pass
+
+    parser_path = str(Path(parser_dir) / f"{corpus_name}_parser").replace("/", ".")
+    Parser = getattr(import_module(parser_path), "Parser")
+    parser = Parser(data_dir)
+
+    parser.seed = 2021
+    metadata = {
+        "model": vocoder_path,
+        "audio_processor": audio_processor_path,
+        "source_corpus": None,
+        "target_corpus": corpus_name,
+        "sample_number": nums,
+        "target_number": 1,
+        "source_random_seed": None,
+        "target_random_seed": parser.seed,
+        "pairs": [],
+    }
 
     mels = []
-    for audio_path in tqdm(audio_paths):
+    for _ in tqdm(range(nums)):
+        audio_path, speaker_id, content = parser.sample_source()
+        metadata["pairs"].append(
+            {
+                "source_speaker": None,
+                "target_speaker": speaker_id,
+                "src_utt": None,
+                "tgt_utts": audio_path,
+                "content": content,
+            }
+        )
+        audio_path = Path(data_dir) / audio_path
         mel = audioprocessor.file2spectrogram(audio_path, return_wav=False)
-        mel = torch.from_numpy(mel).to(device)
+        mel = torch.from_numpy(mel).float().to(device)
         mels.append(mel)
-    print(f"[INFO]: {len(audio_paths)} audios is loaded.")
+    print(f"[INFO]: {len(mels)} audios is loaded.")
 
     with torch.no_grad():
         waveforms = batch_inference(mels, vocoder, batch_size=batch_size)
@@ -83,20 +101,9 @@ def main(
     save_dir = Path(out_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
 
-    metadata = {
-        "source_corpus": source_corpus,
-        "target_corpus": target_corpus,
-        "model": vocoder_path,
-        "audio_processor": audio_processor_path,
-        "pairs": [],
-    }
-    for i, (audio_path, waveform) in enumerate(zip(audio_paths, waveforms)):
-        audio_path = PurePosixPath(audio_path)
-        audio_path = audio_path.relative_to(data_dir)
+    for i, waveform in enumerate(waveforms):
         output_path = save_dir / f"{i:04d}.wav"
-        metadata["pairs"].append(
-            {"tgt_utts": [str(audio_path)], "converted": f"{i:04d}.wav"}
-        )
+        metadata["pairs"][i]["converted"] = f"{i:04d}.wav"
         waveform = waveform.detach().cpu().numpy()
         sf.write(output_path, waveform, vocoder.sample_rate)
 

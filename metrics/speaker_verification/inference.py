@@ -22,6 +22,7 @@ def calculate_score(
 ):
     """Calculate score"""
 
+    data_dir = Path(data_dir)
     metadata_path = data_dir / "metadata.json"
     metadata = json.load(metadata_path.open())
 
@@ -30,7 +31,7 @@ def calculate_score(
     count = 0
 
     for pair in tqdm(metadata["pairs"]):
-        wav = preprocess_wav(pair["converted"])
+        wav = preprocess_wav(data_dir / pair["converted"])
         source_emb = model.embed_utterance(wav)
 
         targets = [Path(target_dir) / tgt_utt for tgt_utt in pair["tgt_utts"]]
@@ -48,11 +49,11 @@ def calculate_score(
         # print(cosine_similarity)
         if cosine_similarity > threshold:
             count += 1
-
-    print(f"[INFO]: Speaker verification accept rate: {count / len(metadata)}")
+    svar = count / len(metadata["pairs"])
+    print(f"[INFO]: Speaker verification accept rate: {svar}")
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     print(
-        f"Speaker verification accept rate: {count / len(metadata)}",
+        f"Speaker verification accept rate: {svar}",
         file=output.open("a"),
     )

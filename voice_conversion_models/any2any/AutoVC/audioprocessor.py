@@ -14,7 +14,7 @@ class AudioProcessor:
 
     sample_rate = 16000
     n_mels = 80
-    top_db = 15
+    top_db = 60
     ref_db = 20
     max_db = 100
     fft_len = 1024
@@ -29,7 +29,7 @@ class AudioProcessor:
         """Load waveform."""
         wav = load(file_path, sr=cls.sample_rate)[0]
         wav = wav / (np.abs(wav).max() + 1e-6)
-        # wav = trim(wav, top_db=cls.top_db)[0]
+        wav = trim(wav, top_db=cls.top_db)[0]
         wav = filtfilt(*cls.butter_highpass(), wav)
         wav = wav * 0.96
 
@@ -57,15 +57,6 @@ class AudioProcessor:
 
         if return_wav:
             return wav, spectrogram
-
-        return spectrogram
-
-    @classmethod
-    def get_input(cls, file_path):
-        """Get model input."""
-
-        wav = cls.load_wav(file_path)
-        spectrogram = cls.wav2spectrogram(wav)
 
         return spectrogram
 

@@ -82,12 +82,3 @@ class AudioProcessor:
             return wav, spectrogram
 
         return spectrogram
-
-    @classmethod
-    def get_input(cls, file_path):
-        """Get model input."""
-
-        wav = cls.load_wav(file_path)
-        spectrogram = cls.wav2spectrogram(wav)
-
-        return spectrogram

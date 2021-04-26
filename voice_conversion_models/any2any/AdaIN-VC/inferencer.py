@@ -77,8 +77,8 @@ class Inferencer:
 
     def inference_from_file(self, source, targets):
         """Inference from file path."""
-        src_mel = AudioProcessor.get_input(source)
-        tgt_mels = [AudioProcessor.get_input(target) for target in targets]
+        src_mel = AudioProcessor.file2spectrogram(source)
+        tgt_mels = [AudioProcessor.file2spectrogram(target) for target in targets]
 
         result = self.inference(src_mel, tgt_mels)
 

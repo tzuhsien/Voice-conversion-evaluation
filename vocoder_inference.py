@@ -63,8 +63,8 @@ def main(
     parser_path = str(Path(parser_dir) / f"{corpus_name}_parser").replace("/", ".")
     Parser = getattr(import_module(parser_path), "Parser")
     parser = Parser(data_dir)
-
-    parser.seed = 2021
+    seed = 2021
+    parser.set_random_seed(seed)
     metadata = {
         "model": vocoder_path,
         "audio_processor": audio_processor_path,
@@ -85,7 +85,7 @@ def main(
                 "source_speaker": None,
                 "target_speaker": speaker_id,
                 "src_utt": None,
-                "tgt_utts": audio_path,
+                "tgt_utts": [audio_path],
                 "content": content,
             }
         )

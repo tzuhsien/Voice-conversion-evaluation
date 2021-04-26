@@ -27,6 +27,11 @@ class Parser:
         self.seed = seed
         self.wav_files = wav_files
 
+    def set_random_seed(self, seed):
+        """Set random seed"""
+        random.seed(seed)
+        self.seed = seed
+
     def sample_source(self):
         """Sample as source"""
         wav_file = random.choice(self.wav_files)

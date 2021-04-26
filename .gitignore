@@ -5,3 +5,4 @@ universal-vocoder/logs/*
 *.pth
 *.pkl
 .python-version
+*.wav

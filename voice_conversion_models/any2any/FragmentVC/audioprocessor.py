@@ -31,10 +31,8 @@ class AudioProcessor:
         sox_transform = tfm
 
     @classmethod
-    def load_wav(cls, audio_path) -> np.ndarray:
-        """Load and preprocess waveform."""
-        wav = load(audio_path, sr=cls.sample_rate)[0]
-        wav = wav / (np.abs(wav).max() + 1e-6)
+    def trim_wav(cls, wav):
+        """trim wav"""
         if cls.trim_method == "librosa":
             _, (start_frame, end_frame) = trim(
                 wav, top_db=25, frame_length=512, hop_length=128
@@ -51,6 +49,15 @@ class AudioProcessor:
                 input_array=wav, sample_rate_in=cls.sample_rate
             )
 
+        return wav
+
+    @classmethod
+    def load_wav(cls, audio_path, is_trim=True) -> np.ndarray:
+        """Load and preprocess waveform."""
+        wav = load(audio_path, sr=cls.sample_rate)[0]
+        wav = wav / (np.abs(wav).max() + 1e-6)
+        if is_trim:
+            wav = cls.trim_wav(wav)
         return wav
 
     @classmethod

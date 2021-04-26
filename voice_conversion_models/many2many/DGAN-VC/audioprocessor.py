@@ -26,32 +26,33 @@ class AudioProcessor:
     def load_wav(cls, file_path):
         """Load waveform."""
         wav, _ = load(file_path, sr=cls.sample_rate)
-        wav = wav / (np.abs(wav).max() + 1e-6)
         # Trimming
         wav, _ = trim(wav)
 
-        # Preemphasis
+        wav = wav / (np.abs(wav).max() + 1e-6)
 
         return wav
 
     @classmethod
     def wav2spectrogram(cls, wav):
         """Waveform to spectrogram."""
+        # Preemphasis
         wav = np.append(wav[0], wav[1:] - cls.preemphasis * wav[:-1])
+        # stft
         linear = stft(
             y=wav, n_fft=cls.fft_len, hop_length=cls.hop_len, win_length=cls.win_len
         )
 
         # magnitude spectrogram
-        mag = np.abs(linear)  # (1+n_fft//2, T)
+        spec = np.abs(linear)  # (1+n_fft//2, T)
         # to decibel
-        mag = 20 * np.log10(np.maximum(1e-5, mag))
+        spec = 20 * np.log10(np.maximum(1e-5, spec))
         # normalize
-        mag = np.clip((mag - cls.ref_db + cls.max_db) / cls.max_db, 1e-8, 1)
+        spec = np.clip((spec - cls.ref_db + cls.max_db) / cls.max_db, 1e-8, 1)
         # Transpose
-        mag = mag.T.astype(np.float32)  # (T, 1+n_fft//2)
+        spec = spec.T.astype(np.float32)  # (T, 1+n_fft//2)
 
-        return mag
+        return spec
 
     @classmethod
     def file2spectrogram(cls, file_path, return_wav=False):
@@ -61,14 +62,5 @@ class AudioProcessor:
 
         if return_wav:
             return wav, spectrogram
-
-        return spectrogram
-
-    @classmethod
-    def get_input(cls, file_path):
-        """Get model input."""
-
-        wav = cls.load_wav(file_path)
-        spectrogram = cls.wav2spectrogram(wav)
 
         return spectrogram

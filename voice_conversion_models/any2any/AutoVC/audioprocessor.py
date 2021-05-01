@@ -25,11 +25,12 @@ class AudioProcessor:
     min_level = np.exp(-100 / 20 * np.log(10))
 
     @classmethod
-    def load_wav(cls, file_path):
+    def load_wav(cls, file_path, is_trim):
         """Load waveform."""
         wav = load(file_path, sr=cls.sample_rate)[0]
         wav = wav / (np.abs(wav).max() + 1e-6)
-        wav = trim(wav, top_db=cls.top_db)[0]
+        if is_trim:
+            wav = trim(wav, top_db=cls.top_db)[0]
         wav = filtfilt(*cls.butter_highpass(), wav)
         wav = wav * 0.96
 
@@ -49,9 +50,9 @@ class AudioProcessor:
         return db_normalized
 
     @classmethod
-    def file2spectrogram(cls, file_path, return_wav=False):
+    def file2spectrogram(cls, file_path, return_wav=False, is_trim=True):
         """Load audio file and create spectrogram."""
-        wav = cls.load_wav(file_path)
+        wav = cls.load_wav(file_path, is_trim=is_trim)
 
         spectrogram = cls.wav2spectrogram(wav)
 

@@ -1,8 +1,9 @@
 """Inferencer of AdaIN-VC"""
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 import numpy as np
 import torch
+from torch import Tensor
 
 from .models import load_pretrained_wav2vec
 from .audioprocessor import AudioProcessor
@@ -22,9 +23,9 @@ class Inferencer:
         self.model = torch.jit.load(ckpt_path).to(device).eval()
         self.device = device
 
-    def inference_one_utterance(self, src_wav, tgt_mels):
+    def inference(self, src_wav: np.ndarray, tgt_mels: List[np.ndarray]) -> Tensor:
         """Inference one utterance."""
-        src_wav = torch.FloatTensor(src_wav).unsqueeze(0).to(self.device)
+        src_wav = torch.from_numpy(src_wav).unsqueeze(0).to(self.device)
         tgt_mel = np.concatenate(tgt_mels, axis=0)
         tgt_mel = torch.FloatTensor(tgt_mel.T).unsqueeze(0).to(self.device)
         with torch.no_grad():
@@ -33,13 +34,34 @@ class Inferencer:
             out_mel, _ = self.model(src_feat, tgt_mel)
             out_mel = out_mel.transpose(1, 2).squeeze(0)
 
-        return out_mel
+        return out_mel.to("cpu")
 
-    def inference_from_file(self, src_path: str, tgt_paths: List):
+    def inference_from_path(self, src_path: Path, tgt_paths: List[Path]) -> Tensor:
         """Inference from path."""
-        src_wav, _ = AudioProcessor.file2spectrogram(src_path, return_wav=True)
-        tgt_mels = [AudioProcessor.file2spectrogram(tgt_path) for tgt_path in tgt_paths]
+        try:
+            src_wav, _ = AudioProcessor.file2spectrogram(src_path, return_wav=True)
+        except ValueError:
+            src_wav, _ = AudioProcessor.file2spectrogram(
+                src_path, return_wav=True, is_trim=False
+            )
 
-        conv_mel = self.inference_one_utterance(src_wav, tgt_mels)
+        tgt_mels = []
+        for tgt_path in tgt_paths:
+            try:
+                tgt_mel = AudioProcessor.file2spectrogram(tgt_path)
+            except ValueError:
+                tgt_mel = AudioProcessor.file2spectrogram(tgt_path, is_trim=False)
+
+            tgt_mels.append(tgt_mel)
+
+        result = self.inference(src_wav, tgt_mels)
+
+        return result
+
+    def inference_from_pair(self, pair, source_dir: str, target_dir: str) -> Tensor:
+        """Inference from pair of metadata."""
+        source_utt = Path(source_dir) / pair["src_utt"]
+        target_utts = [Path(target_dir) / tgt_utt for tgt_utt in pair["tgt_utts"]]
+        conv_mel = self.inference_from_path(source_utt, target_utts)
 
         return conv_mel

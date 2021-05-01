@@ -63,7 +63,7 @@ def main(
     parser_path = str(Path(parser_dir) / f"{corpus_name}_parser").replace("/", ".")
     Parser = getattr(import_module(parser_path), "Parser")
     parser = Parser(data_dir)
-    seed = 2021
+    seed = 5
     parser.set_random_seed(seed)
     metadata = {
         "model": vocoder_path,
@@ -90,7 +90,9 @@ def main(
             }
         )
         audio_path = Path(data_dir) / audio_path
-        mel = audioprocessor.file2spectrogram(audio_path, return_wav=False)
+        mel = audioprocessor.file2spectrogram(
+            audio_path, return_wav=False, is_trim=False
+        )
         mel = torch.from_numpy(mel).float().to(device)
         mels.append(mel)
     print(f"[INFO]: {len(mels)} audios is loaded.")

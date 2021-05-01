@@ -50,7 +50,7 @@ def main(
 ):
     """Main function"""
     output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # import Inferencer module
     inferencer_path = Path(root) / "inferencer"
@@ -65,21 +65,17 @@ def main(
     vocoder = torch.jit.load(str(vocoder_path)).to(device)
     print(f"[INFO]: Vocoder is loaded from {str(vocoder_path)}.")
 
-    metadata = json.load(open(metadata_path))
-    print(f"[INFO]: Metadata list is loaded from {metadata_path}.")
-
-    metadata["vc_model"] = root
-
     conv_mels = []
     if not reload:
+        metadata = json.load(open(metadata_path))
+        print(f"[INFO]: Metadata list is loaded from {metadata_path}.")
+        metadata["vc_model"] = root
         mel_output_dir = output_dir / "mel_files"
-        mel_output_dir.mkdir(parents=True)
+        mel_output_dir.mkdir(parents=True, exist_ok=True)
 
         for pair in tqdm(metadata["pairs"]):
             # conv_mel: Tensor at cpu with shape ()
-            source = Path(source_dir) / pair["src_utt"]
-            targets = [Path(target_dir) / tgt_utt for tgt_utt in pair["tgt_utts"]]
-            conv_mel = inferencer.inference_from_path(source, targets)
+            conv_mel = inferencer.inference_from_pair(pair, source_dir, target_dir)
             conv_mel = conv_mel.detach()
 
             prefix = Path(pair["src_utt"]).stem
@@ -91,9 +87,11 @@ def main(
             conv_mels.append(conv_mel.to(device))
 
         metadata_output_path = output_dir / "metadata.json"
-        json.dump(metadata, metadata_output_path.open())
+        json.dump(metadata, metadata_output_path.open("w"), indent=2)
 
     else:
+        metadata_path = Path(reload_dir) / "metadata.json"
+        metadata = json.load(metadata_path.open())
         for pair in tqdm(metadata["pairs"]):
             file_path = Path(reload_dir) / pair["mel_path"]
             conv_mel = torch.load(file_path)
@@ -118,7 +116,7 @@ def main(
 
     metadata["vocoder"] = str(vocoder_path)
     metadata_output_path = output_dir / "metadata.json"
-    json.dump(metadata, metadata_output_path.open())
+    json.dump(metadata, metadata_output_path.open("w"), indent=2)
 
 
 if __name__ == "__main__":

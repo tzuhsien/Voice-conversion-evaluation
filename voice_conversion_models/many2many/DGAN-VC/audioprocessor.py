@@ -23,11 +23,12 @@ class AudioProcessor:
     ref_db = 20
 
     @classmethod
-    def load_wav(cls, file_path):
+    def load_wav(cls, file_path, is_trim):
         """Load waveform."""
         wav, _ = load(file_path, sr=cls.sample_rate)
         # Trimming
-        wav, _ = trim(wav)
+        if is_trim:
+            wav, _ = trim(wav)
 
         wav = wav / (np.abs(wav).max() + 1e-6)
 
@@ -55,9 +56,9 @@ class AudioProcessor:
         return spec
 
     @classmethod
-    def file2spectrogram(cls, file_path, return_wav=False):
+    def file2spectrogram(cls, file_path, return_wav=False, is_trim=True):
         """Load audio file and create spectrogram."""
-        wav = cls.load_wav(file_path)
+        wav = cls.load_wav(file_path, is_trim=is_trim)
         spectrogram = cls.wav2spectrogram(wav)
 
         if return_wav:

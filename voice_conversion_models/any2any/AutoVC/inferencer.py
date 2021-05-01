@@ -1,10 +1,13 @@
 """Inferencer of AdaIN-VC"""
+from typing import List
 from collections import OrderedDict
 
 from pathlib import Path
 from math import ceil
 import numpy as np
 import torch
+from torch import Tensor
+
 
 from .model_bl import D_VECTOR
 from .model_vc import Generator
@@ -39,21 +42,21 @@ class Inferencer:
 
         self.device = device
 
-    def encode_uttr(self, mel):
+    def encode_uttr(self, mel: np.ndarray) -> Tensor:
         """Encode timbre information."""
         melsp = torch.from_numpy(mel[np.newaxis, :, :]).to(self.device)
         emb = self.dvector(melsp)
         return emb
 
     @classmethod
-    def pad_seq(cls, mel, base=32):
+    def pad_seq(cls, mel: np.ndarray, base=32) -> np.ndarray:
         """Pad melspectrogram."""
         len_out = int(base * ceil(float(mel.shape[0]) / base))
         len_pad = len_out - mel.shape[0]
         assert len_pad >= 0
         return np.pad(mel, ((0, len_pad), (0, 0)), "constant"), len_pad
 
-    def conversion(self, src_emb, tgt_emb, uttr):
+    def conversion(self, src_emb: Tensor, tgt_emb: Tensor, uttr: np.ndarray) -> Tensor:
         """Convert timbre from source to target."""
         x_org, len_pad = self.pad_seq(uttr)
         uttr = torch.from_numpy(x_org[np.newaxis, :, :]).to(self.device)
@@ -67,7 +70,7 @@ class Inferencer:
 
         return result
 
-    def inference(self, src_mel, tgt_mels):
+    def inference(self, src_mel: np.ndarray, tgt_mels: List[np.ndarray]) -> Tensor:
         """Inference one utterance."""
         with torch.no_grad():
             src_emb = self.encode_uttr(src_mel).squeeze()
@@ -78,7 +81,7 @@ class Inferencer:
 
         return result
 
-    def inference_from_file(self, source, targets):
+    def inference_from_path(self, source: Path, targets: List[Path]) -> Tensor:
         """Inference from file path."""
         src_mel = AudioProcessor.file2spectrogram(source)
         tgt_mels = [AudioProcessor.file2spectrogram(target) for target in targets]
@@ -86,3 +89,11 @@ class Inferencer:
         result = self.inference(src_mel, tgt_mels)
 
         return result
+
+    def inference_from_pair(self, pair, source_dir: str, target_dir: str) -> Tensor:
+        """Inference from pair of metadata."""
+        source_utt = Path(source_dir) / pair["src_utt"]
+        target_utts = [Path(target_dir) / tgt_utt for tgt_utt in pair["tgt_utts"]]
+        conv_mel = self.inference_from_path(source_utt, target_utts)
+
+        return conv_mel

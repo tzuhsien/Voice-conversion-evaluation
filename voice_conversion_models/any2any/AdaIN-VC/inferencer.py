@@ -1,9 +1,12 @@
 """Inferencer of AdaIN-VC"""
+from typing import List
 from pathlib import Path
 import yaml
 import joblib
+import numpy as np
 import torch
 import torch.nn.functional as F
+from torch import Tensor
 
 from .model import AE
 from .audioprocessor import AudioProcessor
@@ -31,21 +34,21 @@ class Inferencer:
         self.device = device
         self.frame_size = config["data_loader"]["frame_size"]
 
-    def denormalize(self, d_mel):
+    def denormalize(self, d_mel: np.ndarray) -> np.ndarray:
         """denormalize"""
         mean, std = self.attr["mean"], self.attr["std"]
         ret = d_mel * std + mean
 
         return ret
 
-    def normalize(self, d_mel):
+    def normalize(self, d_mel: np.ndarray) -> np.ndarray:
         """normalize"""
         mean, std = self.attr["mean"], self.attr["std"]
         ret = (d_mel - mean) / std
 
         return ret
 
-    def preprocess(self, d_mel):
+    def preprocess(self, d_mel: np.ndarray) -> np.ndarray:
         """Preprocess"""
         d_mel = torch.from_numpy(self.normalize(d_mel)).to(self.device)
 
@@ -59,7 +62,7 @@ class Inferencer:
 
         return d_mel
 
-    def inference(self, src_mel, tgt_mels):
+    def inference(self, src_mel: np.ndarray, tgt_mels: List[np.ndarray]) -> Tensor:
         """Inference one utterance."""
         src_mel = self.preprocess(src_mel)
         tgt_mels = [self.preprocess(tgt_mel) for tgt_mel in tgt_mels]
@@ -75,7 +78,7 @@ class Inferencer:
 
         return torch.from_numpy(dec)
 
-    def inference_from_file(self, source, targets):
+    def inference_from_path(self, source: Path, targets: List[Path]) -> Tensor:
         """Inference from file path."""
         src_mel = AudioProcessor.file2spectrogram(source)
         tgt_mels = [AudioProcessor.file2spectrogram(target) for target in targets]
@@ -83,3 +86,11 @@ class Inferencer:
         result = self.inference(src_mel, tgt_mels)
 
         return result
+
+    def inference_from_pair(self, pair, source_dir: str, target_dir: str) -> Tensor:
+        """Inference from pair of metadata."""
+        source_utt = Path(source_dir) / pair["src_utt"]
+        target_utts = [Path(target_dir) / tgt_utt for tgt_utt in pair["tgt_utts"]]
+        conv_mel = self.inference_from_path(source_utt, target_utts)
+
+        return conv_mel

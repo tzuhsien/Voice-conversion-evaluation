@@ -12,7 +12,13 @@ def parse_args():
     """Parse command-line arguments."""
     parser = ArgumentParser()
     parser.add_argument(
-        "-d", "--data_dir", type=str, help="The directrory of test data."
+        "-d", "--data_dir", type=str, help="The directrory of test data.", required=True
+    )
+    parser.add_argument(
+        "-r", "--root", type=str, help="The objective metric directrory.", required=True
+    )
+    parser.add_argument(
+        "-o", "--output_dir", type=str, default=None, help="The output path."
     )
     parser.add_argument(
         "-t",
@@ -22,18 +28,17 @@ def parse_args():
         help="The directrory of label data.",
     )
     parser.add_argument(
+        "-th",
         "--threshold_path",
         type=str,
         default=None,
         help="The path of threshold.",
     )
-    parser.add_argument("-o", "--output", type=str, help="The output path.")
-    parser.add_argument("-r", "--root", type=str, help="The model directrory.")
 
     return vars(parser.parse_args())
 
 
-def main(data_dir, output, root, threshold_path, target_dir):
+def main(data_dir, output_dir, root, target_dir, threshold_path):
     """Main function"""
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -46,7 +51,7 @@ def main(data_dir, output, root, threshold_path, target_dir):
         importlib.import_module(inference_path), "calculate_score"
     )
 
-    model = load_model(root)
+    model = load_model(root, device)
     print(f"[INFO]: The metric is used from {root}.")
 
     with torch.no_grad():
@@ -57,8 +62,8 @@ def main(data_dir, output, root, threshold_path, target_dir):
             "model": model,
             "device": device,
             "data_dir": data_dir,
+            "output_dir": output_dir,
             "target_dir": target_dir,
-            "output": output,
             "threshold_path": threshold_path,
         }
 

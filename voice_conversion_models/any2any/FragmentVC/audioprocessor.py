@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """Preprocess audio files."""
 
+from typing import Tuple, Optional
 import numpy as np
 from librosa import load, stft
 from librosa.filters import mel
 from librosa.effects import trim
-import soundfile as sf
 from scipy.signal import lfilter
 import sox
 
@@ -31,7 +31,7 @@ class AudioProcessor:
         sox_transform = tfm
 
     @classmethod
-    def trim_wav(cls, wav):
+    def trim_wav(cls, wav) -> np.ndarray:
         """trim wav"""
         if cls.trim_method == "librosa":
             _, (start_frame, end_frame) = trim(
@@ -52,7 +52,7 @@ class AudioProcessor:
         return wav
 
     @classmethod
-    def load_wav(cls, audio_path, is_trim=True) -> np.ndarray:
+    def load_wav(cls, audio_path, is_trim) -> np.ndarray:
         """Load and preprocess waveform."""
         wav = load(audio_path, sr=cls.sample_rate)[0]
         wav = wav / (np.abs(wav).max() + 1e-6)
@@ -76,15 +76,12 @@ class AudioProcessor:
         return log_mel_spec.T
 
     @classmethod
-    def write_wav(cls, wav, file_path):
-        """Write waveform."""
-        sf.write(file_path, wav, cls.sample_rate)
-
-    @classmethod
-    def file2spectrogram(cls, file_path, return_wav=False):
+    def file2spectrogram(
+        cls, file_path, return_wav=False, is_trim=True
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """Load audio file and create spectrogram."""
 
-        wav = cls.load_wav(file_path)
+        wav = cls.load_wav(file_path, is_trim=is_trim)
         d_mel = cls.wav2melspectrogram(wav)
 
         if return_wav:

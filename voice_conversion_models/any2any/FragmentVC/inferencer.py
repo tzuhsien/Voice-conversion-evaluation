@@ -1,4 +1,4 @@
-"""Inferencer of AdaIN-VC"""
+"""Inferencer of FragmentVC"""
 from typing import List, Optional
 from pathlib import Path
 import numpy as np
@@ -13,15 +13,17 @@ class Inferencer:
     """Inferencer"""
 
     def __init__(self, root):
-        root = Path(root) / "checkpoints"
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        checkpoint_dir = Path(root) / "checkpoints"
+        wav2vec_path = checkpoint_dir / "wav2vec_small.pt"
+        ckpt_path = checkpoint_dir / "fragmentvc.pt"
+        vocoder_path = checkpoint_dir / "vocoder.pt"
 
-        wav2vec_path = str(root / "wav2vec_small.pt")
-        ckpt_path = str(root / "fragmentvc.pt")
-
-        self.wav2vec = load_pretrained_wav2vec(wav2vec_path).to(device)
-        self.model = torch.jit.load(ckpt_path).to(device).eval()
+        self.wav2vec = load_pretrained_wav2vec(str(wav2vec_path)).to(device)
+        self.model = torch.jit.load(str(ckpt_path)).eval().to(device)
+        self.vocoder = torch.jit.load(str(vocoder_path)).eval().to(device)
         self.device = device
+        self.sample_rate = AudioProcessor.sample_rate
 
     def inference(self, src_wav: np.ndarray, tgt_mels: List[np.ndarray]) -> Tensor:
         """Inference one utterance."""
@@ -65,3 +67,9 @@ class Inferencer:
         conv_mel = self.inference_from_path(source_utt, target_utts)
 
         return conv_mel
+
+    def spectrogram2waveform(self, spectrogram: List[Tensor]) -> List[Tensor]:
+        """Convert spectrogram to waveform."""
+        waveforms = self.vocoder.generate(spectrogram)
+
+        return waveforms

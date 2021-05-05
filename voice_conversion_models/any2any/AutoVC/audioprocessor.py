@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Preprocess audio files."""
 
+from typing import Tuple, Optional
 import numpy as np
 from librosa import load, stft
 from librosa.filters import mel
@@ -25,7 +26,7 @@ class AudioProcessor:
     min_level = np.exp(-100 / 20 * np.log(10))
 
     @classmethod
-    def load_wav(cls, file_path, is_trim):
+    def load_wav(cls, file_path: str, is_trim: bool) -> np.ndarray:
         """Load waveform."""
         wav = load(file_path, sr=cls.sample_rate)[0]
         wav = wav / (np.abs(wav).max() + 1e-6)
@@ -37,7 +38,7 @@ class AudioProcessor:
         return wav
 
     @classmethod
-    def wav2spectrogram(cls, wav):
+    def wav2spectrogram(cls, wav: np.ndarray) -> np.ndarray:
         """Waveform to spectrogram."""
         d_mag = cls.short_time_fourier_transform(wav)
         d_mel = np.dot(d_mag.T, cls.mel_basis)
@@ -50,7 +51,9 @@ class AudioProcessor:
         return db_normalized
 
     @classmethod
-    def file2spectrogram(cls, file_path, return_wav=False, is_trim=True):
+    def file2spectrogram(
+        cls, file_path, return_wav=False, is_trim=True
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """Load audio file and create spectrogram."""
         wav = cls.load_wav(file_path, is_trim=is_trim)
 
@@ -62,14 +65,14 @@ class AudioProcessor:
         return spectrogram
 
     @classmethod
-    def butter_highpass(cls, cutoff=30, order=5):
+    def butter_highpass(cls, cutoff=30, order=5) -> np.ndarray:
         """Create butter highpass filter."""
 
         normal_cutoff = cutoff / (0.5 * cls.sample_rate)
         return butter(order, normal_cutoff, btype="high", analog=False)
 
     @classmethod
-    def short_time_fourier_transform(cls, wav):
+    def short_time_fourier_transform(cls, wav: np.ndarray) -> np.ndarray:
         """Apply short time Fourier transform."""
 
         d_matrix = stft(wav, n_fft=cls.fft_len, hop_length=cls.hop_len)

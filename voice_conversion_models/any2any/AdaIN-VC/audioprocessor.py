@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Preprocess audio files."""
 
+from typing import Tuple, Optional
 import numpy as np
 from librosa import load, stft
 from librosa.filters import mel
@@ -25,7 +26,7 @@ class AudioProcessor:
     top_db = 15
 
     @classmethod
-    def load_wav(cls, file_path, is_trim):
+    def load_wav(cls, file_path: str, is_trim: bool) -> np.ndarray:
         """Load waveform."""
         wav, _ = load(file_path, sr=cls.sample_rate)
         wav = wav / (np.abs(wav).max() + 1e-6)
@@ -35,7 +36,7 @@ class AudioProcessor:
         return wav
 
     @classmethod
-    def wav2spectrogram(cls, wav):
+    def wav2spectrogram(cls, wav: np.ndarray) -> np.ndarray:
         """Returns normalized log(melspectrogram).
         Args:
         sound_file: A string. The full path of a sound file.
@@ -73,7 +74,9 @@ class AudioProcessor:
         return d_mel
 
     @classmethod
-    def file2spectrogram(cls, file_path, return_wav=False, is_trim=True):
+    def file2spectrogram(
+        cls, file_path, return_wav=False, is_trim=True
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """Load audio file and create spectrogram."""
 
         wav = cls.load_wav(file_path, is_trim=is_trim)

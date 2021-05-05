@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 """Preprocess audio files."""
 
+from typing import Tuple, Optional
 import numpy as np
-from librosa import load, stft
-from librosa.filters import mel
-from librosa.effects import trim
 
 
 class AudioProcessor:
@@ -18,29 +16,23 @@ class AudioProcessor:
     n_mels = 80
 
     @classmethod
-    def load_wav(cls, file_path):
+    def load_wav(cls, file_path: str, is_trim: bool) -> np.ndarray:
         """Load waveform."""
 
     @classmethod
-    def wav2spectrogram(cls, wav):
+    def wav2spectrogram(cls, wav: np.ndarray) -> np.ndarray:
         """Waveform to spectrogram."""
 
     @classmethod
-    def file2spectrogram(cls, file_path, return_wav=False):
+    def file2spectrogram(
+        cls, file_path, return_wav=False, is_trim=True
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """Load audio file and create spectrogram."""
-        wav = cls.load_wav(file_path)
-        spectrogram = cls.wav2spectrogram(wav)
+
+        wav = cls.load_wav(file_path, is_trim=is_trim)
+        d_mel = cls.wav2spectrogram(wav)
 
         if return_wav:
-            return wav, spectrogram
-
-        return spectrogram
-
-    @classmethod
-    def get_input(cls, file_path):
-        """Get model input."""
-
-        wav = cls.load_wav(file_path)
-        d_mel = cls.wav2spectrogram(wav)
+            return wav, d_mel
 
         return d_mel

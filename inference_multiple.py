@@ -23,18 +23,50 @@ def parse_args():
         "-b", "--batch_size", type=int, default=16, help="the model dir"
     )
     parser.add_argument("--reload", action="store_true")
-    parser.add_argument("--reload_dir", type=str, help="output wav path")
-    parser.add_argument("--no_vocoder", action="store_true")
 
     return vars(parser.parse_args())
 
 
-def batch_inference(out_mels, vocoder, batch_size):
-    out_wavs = []
-    for i in tqdm(range(0, len(out_mels), batch_size)):
-        right = i + batch_size if len(out_mels) - i >= batch_size else len(out_mels)
-        out_wavs.extend(vocoder.generate(out_mels[i:right]))
-    return out_wavs
+def conversion(
+    inferencer, device, root, metadata_path, source_dir, target_dir, output_dir
+):
+    """Do conversion and save the output of voice conversion model."""
+    metadata = json.load(open(metadata_path))
+    print(f"[INFO]: Metadata list is loaded from {metadata_path}.")
+    metadata["vc_model"] = root
+    mel_output_dir = output_dir / "mel_files"
+    mel_output_dir.mkdir(parents=True, exist_ok=True)
+
+    conv_mels = []
+    for pair in tqdm(metadata["pairs"]):
+        # conv_mel: Tensor at cpu with shape ()
+        conv_mel = inferencer.inference_from_pair(pair, source_dir, target_dir)
+        conv_mel = conv_mel.detach()
+
+        prefix = Path(pair["src_utt"]).stem
+        postfix = Path(pair["tgt_utts"][0]).stem
+        file_path = mel_output_dir / f"{prefix}_to_{postfix}.pt"
+        torch.save(conv_mel, file_path)
+
+        pair["mel_path"] = f"mel_files/{prefix}_to_{postfix}.pt"
+        conv_mels.append(conv_mel.to(device))
+
+    metadata_output_path = output_dir / "metadata.json"
+    json.dump(metadata, metadata_output_path.open("w"), indent=2)
+
+    return metadata, conv_mels
+
+
+def reload_from_numpy(device, metadata_path, source_dir):
+    """Reload the output of voice conversion model."""
+    metadata = json.load(open(metadata_path))
+    conv_mels = []
+    for pair in tqdm(metadata["pairs"]):
+        file_path = Path(source_dir) / pair["mel_path"]
+        conv_mel = torch.load(file_path)
+        conv_mels.append(conv_mel.to(device))
+
+    return metadata, conv_mels
 
 
 def main(
@@ -45,64 +77,33 @@ def main(
     root,
     batch_size,
     reload,
-    reload_dir,
-    no_vocoder,
 ):
     """Main function"""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # import Inferencer module
-    inferencer_path = Path(root) / "inferencer"
-    inferencer_path = str(inferencer_path).replace("/", ".")
+    inferencer_path = str(Path(root) / "inferencer").replace("/", ".")
     Inferencer = getattr(importlib.import_module(inferencer_path), "Inferencer")
 
     inferencer = Inferencer(root)
+    device = inferencer.device
+    sample_rate = inferencer.sample_rate
     print(f"[INFO]: Inferencer is loaded from {root}.")
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    vocoder_path = Path(root) / "checkpoints/vocoder.pt"
-    vocoder = torch.jit.load(str(vocoder_path)).to(device)
-    print(f"[INFO]: Vocoder is loaded from {str(vocoder_path)}.")
-
-    conv_mels = []
-    if not reload:
-        metadata = json.load(open(metadata_path))
-        print(f"[INFO]: Metadata list is loaded from {metadata_path}.")
-        metadata["vc_model"] = root
-        mel_output_dir = output_dir / "mel_files"
-        mel_output_dir.mkdir(parents=True, exist_ok=True)
-
-        for pair in tqdm(metadata["pairs"]):
-            # conv_mel: Tensor at cpu with shape ()
-            conv_mel = inferencer.inference_from_pair(pair, source_dir, target_dir)
-            conv_mel = conv_mel.detach()
-
-            prefix = Path(pair["src_utt"]).stem
-            postfix = Path(pair["tgt_utts"][0]).stem
-            file_path = mel_output_dir / f"{prefix}_to_{postfix}.pt"
-            torch.save(conv_mel, file_path)
-
-            pair["mel_path"] = f"mel_files/{prefix}_to_{postfix}.pt"
-            conv_mels.append(conv_mel.to(device))
-
-        metadata_output_path = output_dir / "metadata.json"
-        json.dump(metadata, metadata_output_path.open("w"), indent=2)
-
+    if reload:
+        metadata, conv_mels = reload_from_numpy(device, metadata_path, source_dir)
     else:
-        metadata_path = Path(reload_dir) / "metadata.json"
-        metadata = json.load(metadata_path.open())
-        for pair in tqdm(metadata["pairs"]):
-            file_path = Path(reload_dir) / pair["mel_path"]
-            conv_mel = torch.load(file_path)
-            conv_mels.append(conv_mel.to(device))
+        metadata, conv_mels = conversion(
+            inferencer, device, root, metadata_path, source_dir, target_dir, output_dir
+        )
 
-    del inferencer
-    if no_vocoder:
-        return
-
+    waveforms = []
     with torch.no_grad():
-        waveforms = batch_inference(conv_mels, vocoder, batch_size=batch_size)
+        number = len(conv_mels)
+        for left in tqdm(range(0, number, batch_size)):
+            right = left + min(batch_size, number - left)
+            waveforms.extend(inferencer.spectrogram2waveform(conv_mels[left:right]))
 
     for pair, waveform in tqdm(zip(metadata["pairs"], waveforms)):
         waveform = waveform.detach().cpu().numpy()
@@ -112,9 +113,8 @@ def main(
         file_path = output_dir / f"{prefix}_to_{postfix}.wav"
         pair["converted"] = f"{prefix}_to_{postfix}.wav"
 
-        sf.write(file_path, waveform, vocoder.sample_rate)
+        sf.write(file_path, waveform, sample_rate)
 
-    metadata["vocoder"] = str(vocoder_path)
     metadata_output_path = output_dir / "metadata.json"
     json.dump(metadata, metadata_output_path.open("w"), indent=2)
 

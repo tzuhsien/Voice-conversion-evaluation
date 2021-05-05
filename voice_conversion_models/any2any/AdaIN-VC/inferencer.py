@@ -23,16 +23,20 @@ class Inferencer:
         config_path = checkpoint_dir / "config.yaml"
         model_path = checkpoint_dir / "model.ckpt"
         attr_path = checkpoint_dir / "attr.pkl"
+        vocoder_path = checkpoint_dir / "vocoder.pt"
         config = yaml.load(config_path.open(), Loader=yaml.FullLoader)
 
         self.model = AE(config).to(device)
         self.model.load_state_dict(torch.load(model_path))
         self.model.eval()
 
+        self.vocoder = torch.jit.load(str(vocoder_path)).to(device)
+
         self.attr = joblib.load(attr_path)
 
         self.device = device
         self.frame_size = config["data_loader"]["frame_size"]
+        self.sample_rate = AudioProcessor.sample_rate
 
     def denormalize(self, d_mel: np.ndarray) -> np.ndarray:
         """denormalize"""
@@ -94,3 +98,9 @@ class Inferencer:
         conv_mel = self.inference_from_path(source_utt, target_utts)
 
         return conv_mel
+
+    def spectrogram2waveform(self, spectrogram: List[Tensor]) -> List[Tensor]:
+        """Convert spectrogram to waveform."""
+        waveforms = self.vocoder.generate(spectrogram)
+
+        return waveforms

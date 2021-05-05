@@ -18,16 +18,18 @@ class Inferencer:
     """Inferencer"""
 
     def __init__(self, root):
-        root = Path(root) / "checkpoints"
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        dvector_path = root / "encoder.ckpt"
+        checkpoint_dir = Path(root) / "checkpoints"
+        generator_path = checkpoint_dir / "autovc.ckpt"
+        dvector_path = checkpoint_dir / "encoder.ckpt"
+        vocoder_path = checkpoint_dir / "vocoder.pt"
+
         dvector_ckpt = torch.load(dvector_path, map_location=device)
         state_dict = OrderedDict()
         for key, val in dvector_ckpt["model_b"].items():
             state_dict[key[7:]] = val
 
-        generator_path = root / "autovc.ckpt"
         generator_ckpt = torch.load(generator_path, map_location=device)
 
         self.dvector = (
@@ -35,12 +37,13 @@ class Inferencer:
         )
         self.dvector.load_state_dict(state_dict)
 
-        # voice conversion
-
         self.generator = Generator(32, 256, 512, 32).eval().to(device)
         self.generator.load_state_dict(generator_ckpt["model"])
 
+        self.vocoder = torch.jit.load(str(vocoder_path)).to(device)
+
         self.device = device
+        self.sample_rate = AudioProcessor.sample_rate
 
     def encode_uttr(self, mel: np.ndarray) -> Tensor:
         """Encode timbre information."""
@@ -97,3 +100,9 @@ class Inferencer:
         conv_mel = self.inference_from_path(source_utt, target_utts)
 
         return conv_mel
+
+    def spectrogram2waveform(self, spectrogram: List[Tensor]) -> List[Tensor]:
+        """Convert spectrogram to waveform."""
+        waveforms = self.vocoder.generate(spectrogram)
+
+        return waveforms

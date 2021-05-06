@@ -5,7 +5,7 @@ import importlib
 from torch import Tensor
 
 
-class Inferencer:
+class Runner:
     """Inferencer"""
 
     def __init__(self, root, model_name):

@@ -52,7 +52,7 @@ class AudioProcessor:
 
     @classmethod
     def file2spectrogram(
-        cls, file_path, return_wav=False, is_trim=True
+        cls, file_path, return_wav=False, is_trim=False
     ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """Load audio file and create spectrogram."""
         wav = cls.load_wav(file_path, is_trim=is_trim)

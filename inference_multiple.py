@@ -23,16 +23,15 @@ def parse_args():
         "-b", "--batch_size", type=int, default=16, help="the model dir"
     )
     parser.add_argument("--reload", action="store_true")
+    parser.add_argument("--reload_dir", type=str, help="reload dir path")
 
     return vars(parser.parse_args())
 
 
 def conversion(
-    inferencer, device, root, metadata_path, source_dir, target_dir, output_dir
+    inferencer, device, root, metadata, source_dir, target_dir, output_dir
 ):
     """Do conversion and save the output of voice conversion model."""
-    metadata = json.load(open(metadata_path))
-    print(f"[INFO]: Metadata list is loaded from {metadata_path}.")
     metadata["vc_model"] = root
     mel_output_dir = output_dir / "mel_files"
     mel_output_dir.mkdir(parents=True, exist_ok=True)
@@ -51,18 +50,18 @@ def conversion(
         pair["mel_path"] = f"mel_files/{prefix}_to_{postfix}.pt"
         conv_mels.append(conv_mel.to(device))
 
+    metadata["pairs"] = metadata.pop("pairs")
     metadata_output_path = output_dir / "metadata.json"
     json.dump(metadata, metadata_output_path.open("w"), indent=2)
 
     return metadata, conv_mels
 
 
-def reload_from_numpy(device, metadata_path, source_dir):
+def reload_from_numpy(device, metadata, reload_dir):
     """Reload the output of voice conversion model."""
-    metadata = json.load(open(metadata_path))
     conv_mels = []
     for pair in tqdm(metadata["pairs"]):
-        file_path = Path(source_dir) / pair["mel_path"]
+        file_path = Path(reload_dir) / pair["mel_path"]
         conv_mel = torch.load(file_path)
         conv_mels.append(conv_mel.to(device))
 
@@ -77,10 +76,9 @@ def main(
     root,
     batch_size,
     reload,
+    reload_dir,
 ):
     """Main function"""
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     # import Inferencer module
     inferencer_path = str(Path(root) / "inferencer").replace("/", ".")
@@ -91,11 +89,17 @@ def main(
     sample_rate = inferencer.sample_rate
     print(f"[INFO]: Inferencer is loaded from {root}.")
 
+    metadata = json.load(open(metadata_path))
+    print(f"[INFO]: Metadata list is loaded from {metadata_path}.")
+
+    output_dir = Path(output_dir) / Path(root).stem / f"{metadata['source_corpus']}2{metadata['target_corpus']}"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     if reload:
-        metadata, conv_mels = reload_from_numpy(device, metadata_path, source_dir)
+        metadata, conv_mels = reload_from_numpy(device, metadata, reload_dir)
     else:
         metadata, conv_mels = conversion(
-            inferencer, device, root, metadata_path, source_dir, target_dir, output_dir
+            inferencer, device, root, metadata, source_dir, target_dir, output_dir
         )
 
     waveforms = []

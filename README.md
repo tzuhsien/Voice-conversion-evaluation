@@ -2,7 +2,7 @@
 An evaluation toolkit for voice conversion models.
 
 # Metrics
-The metrics contain mean score opinion, character error rate, and speaker recognition accept rate.
+The metrics contain mean score opinion, character error rate, and speaker verification accept rate.
 - Mean score opinion
   - Ensemble several MBnet which is implemented by [sky1456723](https://github.com/sky1456723/Pytorch-MBNet).
 ```

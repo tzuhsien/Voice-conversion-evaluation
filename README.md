@@ -16,10 +16,17 @@ The metadata contains:
 - pairs: List of evaluating pairs
   - source_speaker: The name of the source speaker.
   - target_speaker: The name of the target speaker.
+<<<<<<< HEAD
   - src_utt: The relative path of the source utterance, which is relative to the source dir.
   - tgt_utts: List of the relative path of target utterances, which is relative to the target dir.
   - content: The content of the source utterance.
   - src_second: The second of the source utterance.
+=======
+  - src_utt: The relative path of source utterance.
+  - tgt_utts: List of relative path of target utterances.
+  - content: The content of source utterance.
+  - src_second: The second of source utterance.
+>>>>>>> a328f4f289411333dd22608b2bb4f619ec133797
   - converted: The entry does not appear when use sampler, you need to add the relative path for your converted output.
 
 # Metrics

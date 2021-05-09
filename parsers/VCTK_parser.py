@@ -1,6 +1,7 @@
 """VCTK Corpus parser."""
 import random
 from pathlib import Path, PurePosixPath
+import librosa
 from librosa.util import find_files
 
 
@@ -37,8 +38,10 @@ class Parser:
         wav_file = random.choice(self.wav_files)
         speaker_id = self.get_speaker(wav_file)
         content = self.get_content(wav_file)
+        wav, sample_rate = librosa.load(Path(self.root) / wav_file)
+        second = len(wav) / sample_rate
 
-        return wav_file, speaker_id, content
+        return wav_file, speaker_id, content, second
 
     def sample_targets(self, number):
         """Sample as target"""

@@ -63,12 +63,12 @@ class AudioProcessor:
     @classmethod
     def wav2melspectrogram(
         cls,
-        x: np.ndarray,
+        wav: np.ndarray,
     ) -> np.ndarray:
         """Create a log Mel spectrogram from a raw audio signal."""
         x = lfilter([1, -cls.preemph], [1], x)
         magnitude = np.abs(
-            stft(x, n_fft=cls.n_fft, hop_length=cls.hop_len, win_length=cls.win_len)
+            stft(wav, n_fft=cls.n_fft, hop_length=cls.hop_len, win_length=cls.win_len)
         )
         mel_fb = mel(cls.sample_rate, cls.n_fft, n_mels=cls.n_mels, fmin=cls.f_min)
         mel_spec = np.dot(mel_fb, magnitude)

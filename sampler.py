@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument("target_corpus_name", type=str, help="target corpus name.")
     parser.add_argument("target_dir", type=str, help="target dir.")
     parser.add_argument("-o", "--output_dir", type=str, help="path of pickle file.")
-    parser.add_argument("-p", "--parser_dir", type=str, help="parser name")
+    parser.add_argument("-p", "--parser_dir", type=str, default="./parsers", help="parser name")
     parser.add_argument(
         "-n", "--n_samples", type=int, default=2000, help="number of samples."
     )
@@ -27,10 +27,10 @@ def parse_args():
         help="number of target samples.",
     )
     parser.add_argument(
-        "--s_seed", type=int, help="The random seed for sampling source utterances."
+        "--s_seed", type=int, default=None, help="The random seed for sampling source utterances."
     )
     parser.add_argument(
-        "--t_seed", type=int, help="The random seed for sampling target utterances."
+        "--t_seed", type=int, default=None, help="The random seed for sampling target utterances."
     )
 
     return vars(parser.parse_args())
@@ -79,7 +79,7 @@ def sample_pairs(
     }
 
     for _ in tqdm(range(n_samples)):
-        source_wav, source_speaker_id, content = source_parser.sample_source()
+        source_wav, source_speaker_id, content, second = source_parser.sample_source()
         target_wavs, target_speaker_id = target_parser.sample_targets(n_target_samples)
         metadata["pairs"].append(
             {
@@ -88,8 +88,11 @@ def sample_pairs(
                 "src_utt": source_wav,
                 "tgt_utts": target_wavs,
                 "content": content,
+                "src_second": second,
             }
         )
+
+    metadata["pairs"].sort(key=lambda x: x["src_second"], reverse=True)
 
     output_path = (
         Path(output_dir) / f"{source_corpus_name}_to_{target_corpus_name}.json"

@@ -18,11 +18,11 @@ class AudioProcessor:
     top_db = 60
     ref_db = 20
     max_db = 100
-    fft_len = 1024
+    n_fft = 1024
     hop_len = 256
-    fmin = 90
-    fmax = 7600
-    mel_basis = mel(sample_rate, fft_len, fmin=fmin, fmax=fmax, n_mels=n_mels).T
+    f_min = 90
+    f_max = 7600
+    mel_basis = mel(sample_rate, n_fft, fmin=f_min, fmax=f_max, n_mels=n_mels).T
     min_level = np.exp(-100 / 20 * np.log(10))
 
     @classmethod
@@ -75,5 +75,5 @@ class AudioProcessor:
     def short_time_fourier_transform(cls, wav: np.ndarray) -> np.ndarray:
         """Apply short time Fourier transform."""
 
-        d_matrix = stft(wav, n_fft=cls.fft_len, hop_length=cls.hop_len)
+        d_matrix = stft(wav, n_fft=cls.n_fft, hop_length=cls.hop_len)
         return np.abs(d_matrix)

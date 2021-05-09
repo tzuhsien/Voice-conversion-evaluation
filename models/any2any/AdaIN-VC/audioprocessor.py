@@ -14,7 +14,7 @@ class AudioProcessor:
 
     # signal processing
     sample_rate = 24000  # Sample rate.
-    fft_len = 2048  # fft points (samples)
+    n_fft = 2048  # fft points (samples)
     frame_shift = 0.0125  # seconds
     frame_length = 0.05  # seconds
     hop_len = int(sample_rate * frame_shift)  # samples.
@@ -50,7 +50,7 @@ class AudioProcessor:
 
         # stft
         linear = stft(
-            y=wav, n_fft=cls.fft_len, hop_length=cls.hop_len, win_length=cls.win_len
+            y=wav, n_fft=cls.n_fft, hop_length=cls.hop_len, win_length=cls.win_len
         )
 
         # magnitude spectrogram
@@ -58,7 +58,7 @@ class AudioProcessor:
 
         # mel spectrogram
         mel_basis = mel(
-            cls.sample_rate, cls.fft_len, cls.n_mels
+            cls.sample_rate, cls.n_fft, cls.n_mels
         )  # (n_mels, 1+n_fft//2)
         d_mel = np.dot(mel_basis, mag)  # (n_mels, t)
 

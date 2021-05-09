@@ -7,8 +7,8 @@ Generate the metadata for evaluating models.
   python sampler.py [name of source corpus] [path of source dir] [name of target corpus] [path of target dir] -n [number of samples] -nt [number of target utterances] -o [path of output dir]
 ```
 The metadata contains:
-- source_random_seed: Random seed used in sampling source utterance.
-- target_random_seed: Random seed used in sampling target utterances.
+- source_random_seed: Random seed used for sampling source utterance.
+- target_random_seed: Random seed used for sampling target utterances.
 - source_corpus: The name of the source corpus.
 - target_corpus: The name of the target corpus.
 - n_samples: number of samples

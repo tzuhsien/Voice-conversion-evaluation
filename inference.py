@@ -41,7 +41,7 @@ def main(source, targets, output, root):
         step_moment = datetime.now()
 
         # conv_result: Tensor at cpu with shape (length, n_mels)
-        conv_result = inferencer.inference_from_file(source, targets)
+        conv_result = inferencer.inference_from_path(source, targets)
         elaspe_time = datetime.now() - step_moment
         step_moment = datetime.now()
         print("[INFO]: The time of converting audio", elaspe_time.total_seconds())

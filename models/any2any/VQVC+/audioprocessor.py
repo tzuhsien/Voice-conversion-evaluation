@@ -8,6 +8,7 @@ from librosa import load, stft
 from librosa.filters import mel
 from librosa.effects import trim
 
+
 class AudioProcessor:
     """Process audio data."""
 
@@ -20,6 +21,8 @@ class AudioProcessor:
 
     f_min = 0
     f_max = 11025
+
+    top_db = 30
 
     mel_basis = mel(
         sr=sample_rate,
@@ -34,8 +37,8 @@ class AudioProcessor:
         """Load waveform."""
         wav = load(file_path, sr=cls.sample_rate)[0]
         if is_trim:
-            wav = trim(wav)[0]
-        wav = np.clip(wav, -1.0, 1.0)
+            wav = trim(wav, top_db=cls.top_db)[0]
+        wav = np.clip(wav, -1.0 + 1e-6, 1.0 - 1e-6)
 
         return wav
 
@@ -47,8 +50,8 @@ class AudioProcessor:
             stft(wav, n_fft=cls.n_fft, hop_length=cls.hop_len, win_length=cls.win_len)
         )
         mel_spec = np.dot(cls.mel_basis, magnitude)
-        log_mel_spec = np.log10(mel_spec)
-        return log_mel_spec
+        log_mel_spec = np.log10(mel_spec + 1e-9)
+        return log_mel_spec.T
 
     @classmethod
     def file2spectrogram(

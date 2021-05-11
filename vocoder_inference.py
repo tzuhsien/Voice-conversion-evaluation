@@ -79,7 +79,7 @@ def main(
 
     mels = []
     for _ in tqdm(range(nums)):
-        audio_path, speaker_id, content = parser.sample_source()
+        audio_path, speaker_id, content, second = parser.sample_source()
         metadata["pairs"].append(
             {
                 "source_speaker": None,
@@ -87,6 +87,7 @@ def main(
                 "src_utt": None,
                 "tgt_utts": [audio_path],
                 "content": content,
+                "src_second": second
             }
         )
         audio_path = Path(data_dir) / audio_path

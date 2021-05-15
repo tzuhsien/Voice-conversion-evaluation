@@ -2,12 +2,12 @@
 An evaluation toolkit for voice conversion models.
 
 # Sample test pair
-Generate the metadata for evaluating models. \\
+Generate the metadata for evaluating models. \
 The directory of parsers contains several available corpus parsers.
 ```
   python sampler.py [name of source corpus] [path of source dir] [name of target corpus] [path of target dir] -n [number of samples] -nt [number of target utterances] -o [path of output dir]
 ```
-The pairs of metadata are sorted by src_second for long to short. \\
+The pairs of metadata are sorted by src_second for long to short. \
 The metadata contains:
 - source_corpus: The name of the source corpus.
 - source_corpus_speaker_number: The number of speaker in source corpus.

@@ -1,9 +1,10 @@
-"""LibriTTS parser."""
+"""M-AILABS Corpus parser."""
 import random
 from collections import defaultdict
 from pathlib import Path, PurePosixPath
 import librosa
 from librosa.util import find_files
+import json
 
 
 class Parser:
@@ -13,10 +14,17 @@ class Parser:
         seed = random.randint(1, 1000)
         random.seed(seed)
 
+        if (Path(root) / "by_book").exists():
+            _root = Path(root) / "by_book"
+        else:
+            _root = Path(root)
+
         wav_files = []
         metadata = defaultdict(list)
         speaker_dirs = [
-            speaker_dir for speaker_dir in Path(root).iterdir() if speaker_dir.is_dir()]
+            speaker_dir for speaker_dir in (_root / "female").iterdir() if speaker_dir.is_dir()]
+        speaker_dirs += [
+            speaker_dir for speaker_dir in (_root / "male").iterdir() if speaker_dir.is_dir()]
 
         for speaker_dir in speaker_dirs:
             for wav_file in find_files(speaker_dir):
@@ -37,9 +45,12 @@ class Parser:
 
     def sample_source(self):
         """Sample as source"""
-        wav_file = random.choice(self.wav_files)
+        content = None
+        while content is None:
+            wav_file = random.choice(self.wav_files)
+            content = self.get_content(wav_file)
+
         speaker_id = self.get_speaker(wav_file)
-        content = self.get_content(wav_file)
         wav, sample_rate = librosa.load(Path(self.root) / wav_file)
         second = len(wav) / sample_rate
 
@@ -59,13 +70,18 @@ class Parser:
         return wav_files, speaker_id
 
     def get_content(self, file_path):
-        """Get text for LibriTTS Corpus."""
-        file_path = file_path.replace("wav", "normalized.txt")
-        file_path = Path(self.root) / file_path
-        with file_path.open() as file_text:
-            utterance = file_text.readline()
+        """Get text for VCTK Corpus."""
+        file_name = Path(file_path).name.replace("\uf010", "\u0010")
 
-        return utterance
+        root = Path(self.root)
+        info_path = Path(file_path).parent.parent / "metadata_mls.json"
+        info = json.load((root / info_path).open())
+
+        content = info.get(file_name, None)
+        if content is None:
+            print(file_name)
+            return None
+        return content["original"]
 
     def get_speaker_number(self):
         """Get the number of speaker."""
@@ -73,7 +89,5 @@ class Parser:
 
     @classmethod
     def get_speaker(cls, file_path):
-        """Get speaker for LibriTTS Corpus."""
-        speaker_id = Path(file_path).stem.split("_")[0]
-
-        return speaker_id
+        """Get speaker for M-AILABS Corpus."""
+        return Path(file_path).parent.parent.parent.stem

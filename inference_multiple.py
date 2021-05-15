@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument("-o", "--output_dir", type=str, help="output wav path")
     parser.add_argument("-r", "--root", type=str, help="the model dir")
     parser.add_argument(
-        "-b", "--batch_size", type=int, default=16, help="the model dir"
+        "-b", "--batch_size", type=int, default=10, help="the model dir"
     )
     parser.add_argument("--reload", action="store_true")
     parser.add_argument("--reload_dir", type=str, help="reload dir path")
@@ -82,7 +82,8 @@ def main(
 
     # import Inferencer module
     inferencer_path = str(Path(root) / "inferencer").replace("/", ".")
-    Inferencer = getattr(importlib.import_module(inferencer_path), "Inferencer")
+    Inferencer = getattr(importlib.import_module(
+        inferencer_path), "Inferencer")
 
     inferencer = Inferencer(root)
     device = inferencer.device
@@ -92,7 +93,8 @@ def main(
     metadata = json.load(open(metadata_path))
     print(f"[INFO]: Metadata list is loaded from {metadata_path}.")
 
-    output_dir = Path(output_dir) / Path(root).stem / f"{metadata['source_corpus']}2{metadata['target_corpus']}"
+    output_dir = Path(output_dir) / Path(root).stem / \
+        f"{metadata['source_corpus']}2{metadata['target_corpus']}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if reload:
@@ -103,11 +105,16 @@ def main(
         )
 
     waveforms = []
+    max_memory_use = conv_mels[0].size(0) * batch_size
     with torch.no_grad():
         number = len(conv_mels)
-        for left in tqdm(range(0, number, batch_size)):
+        left = 0
+        while (left < number):
             right = left + min(batch_size, number - left)
-            waveforms.extend(inferencer.spectrogram2waveform(conv_mels[left:right]))
+            waveforms.extend(
+                inferencer.spectrogram2waveform(conv_mels[left:right]))
+            left += batch_size
+            batch_size = max_memory_use // conv_mels[left].size(0)
 
     for pair, waveform in tqdm(zip(metadata["pairs"], waveforms)):
         waveform = waveform.detach().cpu().numpy()

@@ -1,4 +1,5 @@
 """Inference one utterance."""
+import warnings
 import json
 from pathlib import Path
 import importlib
@@ -106,15 +107,18 @@ def main(
 
     waveforms = []
     max_memory_use = conv_mels[0].size(0) * batch_size
+
     with torch.no_grad():
-        number = len(conv_mels)
+        pbar = tqdm(total=metadata["n_samples"])
         left = 0
-        while (left < number):
-            right = left + min(batch_size, number - left)
+        while (left < metadata["n_samples"]):
+            batch_size = max_memory_use // conv_mels[left].size(0) - 1
+            right = left + min(batch_size, metadata["n_samples"] - left)
             waveforms.extend(
                 inferencer.spectrogram2waveform(conv_mels[left:right]))
+            pbar.update(batch_size)
             left += batch_size
-            batch_size = max_memory_use // conv_mels[left].size(0)
+        pbar.close()
 
     for pair, waveform in tqdm(zip(metadata["pairs"], waveforms)):
         waveform = waveform.detach().cpu().numpy()
@@ -131,4 +135,5 @@ def main(
 
 
 if __name__ == "__main__":
+    warnings.filterwarnings("ignore")
     main(**parse_args())

@@ -34,11 +34,21 @@ def parse_args():
         default=None,
         help="The path of threshold.",
     )
+    parser.add_argument(
+        "-m",
+        "--metadata_path",
+        type=str,
+        default=None,
+        help="The path of metadata.",
+    )
+    parser.add_argument(
+        "-l", "--language", type=str, default="EN", help="The language for ASR."
+    )
 
     return vars(parser.parse_args())
 
 
-def main(data_dir, output_dir, root, target_dir, threshold_path):
+def main(data_dir, output_dir, root, target_dir, threshold_path, metadata_path, language):
     """Main function"""
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -51,8 +61,10 @@ def main(data_dir, output_dir, root, target_dir, threshold_path):
         importlib.import_module(inference_path), "calculate_score"
     )
 
-    model = load_model(root, device)
     print(f"[INFO]: The metric is used from {root}.")
+    if root.find("character_error_rate") > -1:
+        root = language
+    model = load_model(root, device)
 
     with torch.no_grad():
         print(f"[INFO]: The testing waveform is loaded from {data_dir}.")
@@ -63,13 +75,15 @@ def main(data_dir, output_dir, root, target_dir, threshold_path):
             "device": device,
             "data_dir": data_dir,
             "output_dir": output_dir,
+            "metadata_path": metadata_path,
             "target_dir": target_dir,
             "threshold_path": threshold_path,
         }
 
         calculate_score(**arguments)
         elaspe_time = datetime.now() - step_moment
-        print("[INFO]: The time of calculate score", elaspe_time.total_seconds())
+        print("[INFO]: The time of calculate score",
+              elaspe_time.total_seconds())
 
 
 if __name__ == "__main__":

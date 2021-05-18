@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Preprocess audio files."""
 
+from typing import Tuple, Optional
 import numpy as np
 from librosa import load, stft
 from librosa.effects import trim
@@ -12,7 +13,7 @@ class AudioProcessor:
 
     # signal processing
     sample_rate = 16000  # Sample rate.
-    fft_len = 1024  # fft points (samples)
+    n_fft = 1024  # fft points (samples)
     frame_shift = 0.0125  # seconds
     frame_length = 0.05  # seconds
     hop_len = int(sample_rate * frame_shift)  # samples.
@@ -23,7 +24,7 @@ class AudioProcessor:
     ref_db = 20
 
     @classmethod
-    def load_wav(cls, file_path, is_trim):
+    def load_wav(cls, file_path: str, is_trim: bool) -> np.ndarray:
         """Load waveform."""
         wav, _ = load(file_path, sr=cls.sample_rate)
         # Trimming
@@ -35,13 +36,13 @@ class AudioProcessor:
         return wav
 
     @classmethod
-    def wav2spectrogram(cls, wav):
+    def wav2spectrogram(cls, wav: np.ndarray) -> np.ndarray:
         """Waveform to spectrogram."""
         # Preemphasis
         wav = np.append(wav[0], wav[1:] - cls.preemphasis * wav[:-1])
         # stft
         linear = stft(
-            y=wav, n_fft=cls.fft_len, hop_length=cls.hop_len, win_length=cls.win_len
+            y=wav, n_fft=cls.n_fft, hop_length=cls.hop_len, win_length=cls.win_len
         )
 
         # magnitude spectrogram
@@ -56,7 +57,9 @@ class AudioProcessor:
         return spec
 
     @classmethod
-    def file2spectrogram(cls, file_path, return_wav=False, is_trim=True):
+    def file2spectrogram(
+        cls, file_path, return_wav=False, is_trim=False
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """Load audio file and create spectrogram."""
         wav = cls.load_wav(file_path, is_trim=is_trim)
         spectrogram = cls.wav2spectrogram(wav)

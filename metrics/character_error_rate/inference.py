@@ -1,5 +1,4 @@
 """Character error rate"""
-import re
 from pathlib import Path
 
 import json
@@ -23,6 +22,7 @@ def load_model(root, device):
         "ES": "jonatasgrosman/wav2vec2-large-xlsr-53-spanish"
     }
 
+    print(f"[INFO]: Load the pre-trained ASR by {pretrain_models[root]}.")
     model = Wav2Vec2ForCTC.from_pretrained(pretrain_models[root]).to(device)
     if root.upper() == "EN":
         tokenizer = Wav2Vec2Tokenizer.from_pretrained(
@@ -86,7 +86,7 @@ def calculate_score(model, device, data_dir, output_dir, metadata_path, **kwargs
 
     cers = []
     for pair in tqdm(metadata["pairs"]):
-        wav, _ = librosa.load(data_dir / pair["src_utt"], sr=16000)
+        wav, _ = librosa.load(data_dir / pair["converted"], sr=16000)
         groundtruth = pair["content"]
 
         inputs = model["tokenizer"](

@@ -84,6 +84,7 @@ def main(data_dir, output_dir, root, target_dir, threshold_path, metadata_path, 
         elaspe_time = datetime.now() - step_moment
         print("[INFO]: The time of calculate score",
               elaspe_time.total_seconds())
+        print("-" * 100)
 
 
 if __name__ == "__main__":

@@ -6,3 +6,5 @@ universal-vocoder/logs/*
 *.pkl
 .python-version
 *.wav
+results
+*.npz

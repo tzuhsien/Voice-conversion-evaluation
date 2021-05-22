@@ -5,8 +5,14 @@ import importlib
 from argparse import ArgumentParser
 from pathlib import Path
 import soundfile as sf
+import logging
 
 import torch
+
+
+logging.basicConfig(level=logging.INFO,
+                    format='[%(levelname)s] %(asctime)-s %(name)s: %(message)s')
+logger = logging.getLogger(__name__)
 
 
 def parse_args():
@@ -28,32 +34,32 @@ def main(source, targets, output, root):
     inferencer_path = str(inferencer_path).replace("/", ".")
     Inferencer = getattr(importlib.import_module(inferencer_path), "Inferencer")
     inferencer = Inferencer(root)
-    print(f"[INFO]: Inferencer is loaded from {root}.")
+    logger.info("Inferencer is loaded from %s.", root)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     vocoder_path = Path(root) / "checkpoints/vocoder.pt"
     vocoder = torch.jit.load(str(vocoder_path)).to(device)
-    print(f"[INFO]: Vocoder is loaded from {str(vocoder_path)}.")
+    logger.info("Vocoder is loaded from %s.", vocoder_path)
 
     with torch.no_grad():
-        print(f"[INFO]: Source waveform is loaded from {source}.")
-        print(f"[INFO]: Target waveforms is loaded from {targets}.")
+        logger.info("Source waveform is loaded from %s.", source)
+        logger.info("Target waveforms is loaded from %s.", targets)
         step_moment = datetime.now()
 
         # conv_result: Tensor at cpu with shape (length, n_mels)
         conv_result = inferencer.inference_from_path(source, targets)
         elaspe_time = datetime.now() - step_moment
         step_moment = datetime.now()
-        print("[INFO]: The time of converting audio", elaspe_time.total_seconds())
+        logger.info("The time of converting audio: %.1f s", elaspe_time.total_seconds())
 
         conv_result = conv_result.to(device)
         waveform = vocoder.generate([conv_result])[0]
         elaspe_time = datetime.now() - step_moment
-        print("[INFO]: The time of generating waveform", elaspe_time.total_seconds())
+        logger.info("The time of generating waveform: %.1f s", elaspe_time.total_seconds())
 
     waveform = waveform.detach().cpu().numpy()
     sf.write(output, waveform, vocoder.sample_rate)
-    print(f"[INFO]: Save converted waveforms to {output}.")
+    logger.info("Save converted waveforms to %s.", output)
 
 
 if __name__ == "__main__":

@@ -37,10 +37,13 @@ class Parser:
 
     def sample_source(self):
         """Sample as source"""
-        wav_file = random.choice(self.wav_files)
-        speaker_id = self.get_speaker(wav_file)
-        content = self.get_content(wav_file)
+        content = None
+        while content is None:
+            wav_file = random.choice(self.wav_files)
+            speaker_id = self.get_speaker(wav_file)
+            content = self.get_content(wav_file)
         wav, sample_rate = librosa.load(Path(self.root) / wav_file)
+        wav, _ = librosa.effects.trim(wav)
         second = len(wav) / sample_rate
 
         return wav_file, speaker_id, content, second
@@ -74,8 +77,6 @@ class Parser:
                 if utterance_id == wav_name:
                     return utterance[1:-3].lower()
 
-        print(f"Can't find the content of {file_path}.")
-        exit()
         return None
 
     def get_speaker_number(self):

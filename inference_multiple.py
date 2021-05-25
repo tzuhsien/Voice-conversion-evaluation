@@ -6,8 +6,14 @@ import importlib
 from argparse import ArgumentParser
 from tqdm import tqdm
 import soundfile as sf
+import logging
 
 import torch
+
+
+logging.basicConfig(level=logging.INFO,
+                    format='[%(levelname)s] %(asctime)-s %(name)s: %(message)s')
+logger = logging.getLogger(__name__)
 
 
 def parse_args():
@@ -65,7 +71,6 @@ def reload_from_numpy(device, metadata, reload_dir):
         file_path = Path(reload_dir) / pair["mel_path"]
         conv_mel = torch.load(file_path)
         conv_mels.append(conv_mel.to(device))
-
     return metadata, conv_mels
 
 
@@ -89,10 +94,10 @@ def main(
     inferencer = Inferencer(root)
     device = inferencer.device
     sample_rate = inferencer.sample_rate
-    print(f"[INFO]: Inferencer is loaded from {root}.")
+    logger.info("Inferencer is loaded from %s.", root)
 
     metadata = json.load(open(metadata_path))
-    print(f"[INFO]: Metadata list is loaded from {metadata_path}.")
+    logger.info("Metadata list is loaded from %s.", metadata_path)
 
     output_dir = Path(output_dir) / Path(root).stem / \
         f"{metadata['source_corpus']}2{metadata['target_corpus']}"
@@ -120,7 +125,7 @@ def main(
             left += batch_size
         pbar.close()
 
-    for pair, waveform in tqdm(zip(metadata["pairs"], waveforms)):
+    for pair, waveform in tqdm(zip(metadata["pairs"], waveforms), total=len(waveforms)):
         waveform = waveform.detach().cpu().numpy()
 
         prefix = Path(pair["src_utt"]).stem

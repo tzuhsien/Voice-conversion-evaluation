@@ -42,18 +42,14 @@ def calculate_score(model, data_dir, output_dir, target_dir, threshold_path, **k
         source_emb = model.embed_utterance(wav)
 
         targets = [target_dir / tgt_utt for tgt_utt in pair["tgt_utts"]]
-        target_embs = []
-        for target in targets:
-            wav = preprocess_wav(target)
-            target_embs.append(model.embed_utterance(wav))
+        target_emb = model.embed_speaker([preprocess_wav(target) for target in targets])
 
-        target_emb = np.mean(target_embs, 0)
         cosine_similarity = (
             np.inner(source_emb, target_emb)
             / np.linalg.norm(source_emb)
             / np.linalg.norm(target_emb)
         )
-        # print(cosine_similarity)
+
         if cosine_similarity > threshold:
             n_accept += 1
 

@@ -44,7 +44,7 @@ def calculate_score(model, device, data_dir, output_dir, **kwargs):
         output_dir = Path(data_dir)
     else:
         output_dir = Path(output_dir)
-    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = Path(output_dir) / "evaluation_score.txt"
 
     file_paths = librosa.util.find_files(data_dir)
@@ -54,7 +54,7 @@ def calculate_score(model, device, data_dir, output_dir, **kwargs):
     wavs = []
     for file_path in tqdm(file_paths):
         wav, _ = librosa.load(file_path, sr=16000)
-        # wav = tfm.build_array(input_array=wav, sample_rate_in=16000)
+        wav = tfm.build_array(input_array=wav, sample_rate_in=16000)
         wav = np.abs(librosa.stft(wav, n_fft=512)).T
         wav = torch.from_numpy(wav).unsqueeze(0).unsqueeze(0)
         wavs.append(wav)
@@ -68,4 +68,5 @@ def calculate_score(model, device, data_dir, output_dir, **kwargs):
 
     print(f"[INFO]: All mean opinion score: {mean_scores}")
     print(f"[INFO]: Average mean opinion score: {average_score}")
-    print(f"Average mean opinion score: {average_score}", file=output_path.open("a"))
+    print(
+        f"Average mean opinion score: {average_score}", file=output_path.open("a"))

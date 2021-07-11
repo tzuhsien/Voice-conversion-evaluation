@@ -1,0 +1,173 @@
+{
+  "source_corpus": "VCTK",
+  "source_corpus_speaker_number": 108,
+  "source_random_seed": 256,
+  "target_corpus": "CMU",
+  "target_corpus_speaker_number": 18,
+  "target_random_seed": 501,
+  "n_samples": 10,
+  "n_target_samples": 5,
+  "vc_model": "models/any2any/AutoVC",
+  "pairs": [
+    {
+      "source_speaker": "p260",
+      "target_speaker": "cmu_us_axb_arctic",
+      "src_utt": "wav48/p260/p260_131.wav",
+      "tgt_utts": [
+        "cmu_us_axb_arctic/wav/arctic_a0033.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0482.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0558.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0245.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0412.wav"
+      ],
+      "content": "Everyone is in favour of the need for welfare reform in general.\n",
+      "src_second": 5.082448979591836,
+      "mel_path": "mel_files/p260_131_to_arctic_a0033.pt",
+      "converted": "p260_131_to_arctic_a0033.wav"
+    },
+    {
+      "source_speaker": "p302",
+      "target_speaker": "cmu_us_ljm_arctic",
+      "src_utt": "wav48/p302/p302_060.wav",
+      "tgt_utts": [
+        "cmu_us_ljm_arctic/wav/arctic_a0268.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0431.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0007.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0275.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0588.wav"
+      ],
+      "content": "Ms McNeill was killed on impact.",
+      "src_second": 4.5259410430839,
+      "mel_path": "mel_files/p302_060_to_arctic_a0268.pt",
+      "converted": "p302_060_to_arctic_a0268.wav"
+    },
+    {
+      "source_speaker": "p255",
+      "target_speaker": "cmu_us_ljm_arctic",
+      "src_utt": "wav48/p255/p255_140.wav",
+      "tgt_utts": [
+        "cmu_us_ljm_arctic/wav/arctic_a0212.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0261.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0159.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0385.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0016.wav"
+      ],
+      "content": "In this case, the farmer had actually given permission.\n",
+      "src_second": 4.353832199546486,
+      "mel_path": "mel_files/p255_140_to_arctic_a0212.pt",
+      "converted": "p255_140_to_arctic_a0212.wav"
+    },
+    {
+      "source_speaker": "p374",
+      "target_speaker": "cmu_us_rxr_arctic",
+      "src_utt": "wav48/p374/p374_369.wav",
+      "tgt_utts": [
+        "cmu_us_rxr_arctic/wav/arctic_a0264.wav",
+        "cmu_us_rxr_arctic/wav/arctic_a0523.wav",
+        "cmu_us_rxr_arctic/wav/arctic_a0263.wav",
+        "cmu_us_rxr_arctic/wav/arctic_a0017.wav",
+        "cmu_us_rxr_arctic/wav/arctic_c0067.wav"
+      ],
+      "content": "And we know that, because we know the hairdresser.",
+      "src_second": 4.183854875283447,
+      "mel_path": "mel_files/p374_369_to_arctic_a0264.pt",
+      "converted": "p374_369_to_arctic_a0264.wav"
+    },
+    {
+      "source_speaker": "p285",
+      "target_speaker": "cmu_us_ljm_arctic",
+      "src_utt": "wav48/p285/p285_351.wav",
+      "tgt_utts": [
+        "cmu_us_ljm_arctic/wav/arctic_a0560.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0464.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0393.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0129.wav",
+        "cmu_us_ljm_arctic/wav/arctic_a0461.wav"
+      ],
+      "content": "The Scottish Parliament should set an example for Westminster to follow.\n",
+      "src_second": 3.9290702947845806,
+      "mel_path": "mel_files/p285_351_to_arctic_a0560.pt",
+      "converted": "p285_351_to_arctic_a0560.wav"
+    },
+    {
+      "source_speaker": "p239",
+      "target_speaker": "cmu_us_axb_arctic",
+      "src_utt": "wav48/p239/p239_118.wav",
+      "tgt_utts": [
+        "cmu_us_axb_arctic/wav/arctic_a0166.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0347.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0441.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0112.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0017.wav"
+      ],
+      "content": "We feel very comfortable in this international environment.\n",
+      "src_second": 3.7993650793650793,
+      "mel_path": "mel_files/p239_118_to_arctic_a0166.pt",
+      "converted": "p239_118_to_arctic_a0166.wav"
+    },
+    {
+      "source_speaker": "p243",
+      "target_speaker": "cmu_us_rxr_arctic",
+      "src_utt": "wav48/p243/p243_368.wav",
+      "tgt_utts": [
+        "cmu_us_rxr_arctic/wav/arctic_a0311.wav",
+        "cmu_us_rxr_arctic/wav/arctic_a0540.wav",
+        "cmu_us_rxr_arctic/wav/arctic_a0114.wav",
+        "cmu_us_rxr_arctic/wav/arctic_c0046.wav",
+        "cmu_us_rxr_arctic/wav/arctic_c0058.wav"
+      ],
+      "content": "It was a goal which came from nothing.\n",
+      "src_second": 3.4179138321995466,
+      "mel_path": "mel_files/p243_368_to_arctic_a0311.pt",
+      "converted": "p243_368_to_arctic_a0311.wav"
+    },
+    {
+      "source_speaker": "p237",
+      "target_speaker": "cmu_us_slp_arctic",
+      "src_utt": "wav48/p237/p237_176.wav",
+      "tgt_utts": [
+        "cmu_us_slp_arctic/wav/arctic_a0373.wav",
+        "cmu_us_slp_arctic/wav/arctic_a0143.wav",
+        "cmu_us_slp_arctic/wav/arctic_a0479.wav",
+        "cmu_us_slp_arctic/wav/arctic_a0200.wav",
+        "cmu_us_slp_arctic/wav/arctic_a0216.wav"
+      ],
+      "content": "Does that put pressure on us ?\n",
+      "src_second": 3.2901133786848074,
+      "mel_path": "mel_files/p237_176_to_arctic_a0373.pt",
+      "converted": "p237_176_to_arctic_a0373.wav"
+    },
+    {
+      "source_speaker": "p241",
+      "target_speaker": "cmu_us_axb_arctic",
+      "src_utt": "wav48/p241/p241_040.wav",
+      "tgt_utts": [
+        "cmu_us_axb_arctic/wav/arctic_a0577.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0229.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0049.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0124.wav",
+        "cmu_us_axb_arctic/wav/arctic_a0514.wav"
+      ],
+      "content": "President Bush is at war.\n",
+      "src_second": 2.6933333333333334,
+      "mel_path": "mel_files/p241_040_to_arctic_a0577.pt",
+      "converted": "p241_040_to_arctic_a0577.wav"
+    },
+    {
+      "source_speaker": "p285",
+      "target_speaker": "cmu_us_fem_arctic",
+      "src_utt": "wav48/p285/p285_356.wav",
+      "tgt_utts": [
+        "cmu_us_fem_arctic/wav/arctic_a0081.wav",
+        "cmu_us_fem_arctic/wav/arctic_a0461.wav",
+        "cmu_us_fem_arctic/wav/arctic_a0002.wav",
+        "cmu_us_fem_arctic/wav/arctic_a0080.wav",
+        "cmu_us_fem_arctic/wav/arctic_a0114.wav"
+      ],
+      "content": "In fact, we were all over the shop.\n",
+      "src_second": 2.4373696145124715,
+      "mel_path": "mel_files/p285_356_to_arctic_a0081.pt",
+      "converted": "p285_356_to_arctic_a0081.wav"
+    }
+  ]
+}

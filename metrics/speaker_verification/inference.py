@@ -17,7 +17,7 @@ def load_model(root, device):
     return model
 
 
-def calculate_score(model, data_dir, output_dir, target_dir, threshold_path, **kwargs):
+def calculate_score(model, data_dir, output_dir, target_dir, threshold_path, metadata_path, **kwargs):
     """Calculate score"""
 
     data_dir = Path(data_dir)
@@ -27,14 +27,14 @@ def calculate_score(model, data_dir, output_dir, target_dir, threshold_path, **k
         output_dir = data_dir
     else:
         output_dir = Path(output_dir)
-    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = Path(output_dir) / "evaluation_score.txt"
 
-    metadata_path = data_dir / "metadata.json"
+    if metadata_path is None:
+        metadata_path = data_dir / "metadata.json"
     metadata = json.load(metadata_path.open())
 
-    thresholds = yaml.load(Path(threshold_path).open())
-    threshold = thresholds[metadata["target_corpus"]]
+    info = yaml.load(Path(threshold_path).open())
 
     n_accept = 0
     for pair in tqdm(metadata["pairs"]):
@@ -42,7 +42,8 @@ def calculate_score(model, data_dir, output_dir, target_dir, threshold_path, **k
         source_emb = model.embed_utterance(wav)
 
         targets = [target_dir / tgt_utt for tgt_utt in pair["tgt_utts"]]
-        target_emb = model.embed_speaker([preprocess_wav(target) for target in targets])
+        target_emb = model.embed_speaker(
+            [preprocess_wav(target) for target in targets])
 
         cosine_similarity = (
             np.inner(source_emb, target_emb)
@@ -50,7 +51,7 @@ def calculate_score(model, data_dir, output_dir, target_dir, threshold_path, **k
             / np.linalg.norm(target_emb)
         )
 
-        if cosine_similarity > threshold:
+        if cosine_similarity > info["Threshold"]:
             n_accept += 1
 
     svar = n_accept / len(metadata["pairs"])

@@ -56,13 +56,12 @@ class Inferencer:
         return torch.stack(wav_chucks).to(self.device)
 
     def get_speaker_id(self, speaker_name: str, batch):
-        speaker_id = self.speaker2id.index(speaker_name)
-        # if isinstance(speaker_name, str):
-        #     try:
-        #         speaker_id = self.speaker2id[speaker_name]
-        #     except ValueError:
-        #         print(f"{speaker_name} is not available")
-        #         exit()
+        if isinstance(speaker_name, str):
+            try:
+                speaker_id = self.speaker2id[speaker_name]
+            except ValueError:
+                print(f"{speaker_name} is not available")
+                exit()
 
         return torch.LongTensor([int(speaker_id)] * batch).to(self.device)
 

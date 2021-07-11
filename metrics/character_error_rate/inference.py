@@ -77,7 +77,7 @@ def calculate_score(model, device, data_dir, output_dir, metadata_path, **kwargs
         output_dir = data_dir
     else:
         output_dir = Path(output_dir)
-    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = Path(output_dir) / "evaluation_score.txt"
 
     if metadata_path is None:

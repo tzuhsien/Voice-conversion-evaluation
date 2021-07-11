@@ -29,7 +29,7 @@ def calculate_equal_error_rate(labels, scores):
 
     """
     fpr, tpr, thresholds = roc_curve(labels, scores)
-    a = lambda x: 1.0 - x - interp1d(fpr, tpr)(x)
+    def a(x): return 1.0 - x - interp1d(fpr, tpr)(x)
     equal_error_rate = brentq(a, 0.0, 1.0)
     threshold = interp1d(fpr, thresholds)(equal_error_rate)
     return equal_error_rate, threshold
@@ -45,8 +45,9 @@ def main(data_path, corpus_name, output_path):
     print(f"[INFO]: Equal error rate: {equal_error_rate}")
     print(f"[INFO]: Threshold: {threshold}")
 
-    output_path = Path(output_path) / "threshold.yaml"
-    print(f"{corpus_name}: {threshold}", file=output_path.open("a"))
+    output_path = Path(output_path) / f"{corpus_name}_eer.yaml"
+    print(f"Threshold: {threshold}", file=output_path.open("a"))
+    print(f"Equal_Error_Rate: {equal_error_rate}", file=output_path.open("a"))
 
 
 if __name__ == "__main__":

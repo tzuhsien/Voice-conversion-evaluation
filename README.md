@@ -2,7 +2,9 @@
 An evaluation toolkit for voice conversion models.
 
 # Make metadata
-The metadata plays an important role in this repo. There are several information in the metadata, include dataset name, number of samples, speaker names, the relative path of audio, and the content of source audio. You can find more information with metadata [here](https://github.com/tzuhsien/Voice-conversion-evaluation/blob/master/examples/README.md).
+The metadata plays an important role in this repo. There are several information in the metadata, include dataset name, number of samples, speaker names, the relative path of audio, and the content of source audio. 
+
+You can find more information with metadata [here](https://github.com/tzuhsien/Voice-conversion-evaluation/blob/master/examples/README.md).
 
 There is an example for generating metadata below.
 ```
@@ -17,7 +19,12 @@ You can find an example metadata in the directory of examples.
 We provide several dataset parsers in the directory of parsers. The default parser is the same as the dataset name. You can name the dataset by yourself and specify a particular parser.
 
 # Inference
-Easy to inference several voice conversion models with a unified I/O interface. You should prepare metadata before you inference voice conversion models. After inferencing voice conversion models, the metadata will be copy into the output directory and add the relative paths of converted audios. All of the pretrained models can find in [releases](https://github.com/tzuhsien/Voice-conversion-evaluation/releases). Please put the checkpoints into the correspond model directory, e.g. ```models/any2any/AdaIN-VC/checkpoints```.
+Easy to inference several voice conversion models with a unified I/O interface. You should prepare metadata before you inference voice conversion models. 
+
+After inferencing voice conversion models, the metadata will be copy into the output directory and add the relative paths of converted audios. 
+
+All of the pretrained models can find in [releases](https://github.com/tzuhsien/Voice-conversion-evaluation/releases). Please put the checkpoints into the corresponding model directory, e.g. ```models/any2any/AdaIN-VC/checkpoints```.
+
 There is an example for inference below.
 ```
   python inference.py \ 

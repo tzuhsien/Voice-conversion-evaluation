@@ -1,3 +1,7 @@
+All audio paths in metadata are relative paths.
+
+For reducing the inference time, the pairs in metadata are sorted by the lengths of source audios from long to short.
+
 The metadata contains:
 - source_corpus: The name of the source dataset.
 - source_corpus_speaker_number: The number of speaker in source dataset.

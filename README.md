@@ -17,8 +17,7 @@ You can find an example metadata in the directory of examples.
 We provide several dataset parsers in the directory of parsers. The default parser is the same as the dataset name. You can name the dataset by yourself and specify a particular parser.
 
 # Inference
-Easy to inference several voice conversion models with a unified I/O interface. You should prepare metadata before you inference voice conversion models. After inferencing voice conversion models, the metadata will be copy into the output directory and add relative paths of converted audios.
-
+Easy to inference several voice conversion models with a unified I/O interface. You should prepare metadata before you inference voice conversion models. After inferencing voice conversion models, the metadata will be copy into the output directory and add the relative paths of converted audios. All of the pretrained models can find in [releases](https://github.com/tzuhsien/Voice-conversion-evaluation/releases). Please put the checkpoints into the correspond model directory, e.g. ```models/any2any/AdaIN-VC/checkpoints```.
 There is an example for inference below.
 ```
   python inference.py \ 
@@ -29,8 +28,13 @@ There is an example for inference below.
     -r models/any2any/AdaIN-VC
 ```
 
+For BLOW, there are some issues when reloading the checkpoint. Please inference BLOW in its directory.
+
 # Metrics
 The metrics include Nerual mean opinion score assessment, character error rate, and speaker verification acceptance rate.
+
+If you only want to use the metrics here, it is unnecessary to use the inference code in this repo. You can use your own inference code with the metadata. Be carefully, you need to add the relative paths of converted audios into metadata.
+
 - Nerual mean opinion score assessment:
   - Ensemble several MBNet which is implemented by [sky1456723](https://github.com/sky1456723/Pytorch-MBNet).
   - You can calculate nerual mean opinion score assessment without metadata.

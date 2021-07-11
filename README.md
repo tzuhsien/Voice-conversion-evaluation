@@ -6,7 +6,7 @@ The metadata plays an important role in this repo. There are several information
 
 You can find more information with metadata [here](https://github.com/tzuhsien/Voice-conversion-evaluation/blob/master/examples/README.md).
 
-There is an example for generating metadata below.
+There is an example for generating metadata.
 ```
   python make_metadata.py \ 
     VCTK /path_of_datasets/VCTK-Corpus \ 
@@ -19,13 +19,13 @@ You can find an example metadata in the directory of examples.
 We provide several dataset parsers in the directory of parsers. The default parser is the same as the dataset name. You can name the dataset by yourself and specify a particular parser.
 
 # Inference
-Easy to inference several voice conversion models with a unified I/O interface. You should prepare metadata before you inference voice conversion models. 
+Utilize a unified I/O interface to inference voice conversion models. You should prepare metadata before you inference voice conversion models. 
 
-After inferencing voice conversion models, the metadata will be copy into the output directory and add the relative paths of converted audios. 
+After inferencing voice conversion models, the relative path of converted audios will be add into the metadata, and the metadata will be copied into the output directory. 
 
-All of the pretrained models can find in [releases](https://github.com/tzuhsien/Voice-conversion-evaluation/releases). Please put the checkpoints into the corresponding model directory, e.g. ```models/any2any/AdaIN-VC/checkpoints```.
+All of the pretrained models can be found in [releases](https://github.com/tzuhsien/Voice-conversion-evaluation/releases). Please put the checkpoints into the corresponding model directory, e.g. ```models/any2any/AdaIN-VC/checkpoints```.
 
-There is an example for inference below.
+There is an example for inference.
 ```
   python inference.py \ 
     -m examples/metadata_example.json \ 
@@ -40,7 +40,7 @@ For BLOW, there are some issues when reloading the checkpoint. Please inference 
 # Metrics
 The metrics include Nerual mean opinion score assessment, character error rate, and speaker verification acceptance rate.
 
-If you only want to use the metrics here, it is unnecessary to use the inference code in this repo. You can use your own inference code with the metadata. Be carefully, you need to add the relative paths of converted audios into metadata.
+If you only want to use the metrics here, it is unnecessary to use the inference code in this repo. You can use your own inference code with the metadata. Be careful, you need to add the relative paths of converted audios into metadata.
 
 - Nerual mean opinion score assessment:
   - Ensemble several MBNet which is implemented by [sky1456723](https://github.com/sky1456723/Pytorch-MBNet).
@@ -62,7 +62,7 @@ If you only want to use the metrics here, it is unnecessary to use the inference
   - Use the speaker verification model provided by [Resemblyzer](https://github.com/resemble-ai/Resemblyzer).
   - You can calculate the equal error rate and threshold by ```metrics/speaker_verification/equal_error_rate/```.
   - And some pre-calculated thresholds are in ``` metrics/speaker_verification/equal_error_rate/```.
-  - You should prepare metadata before you speaker verification acceptance rate.
+  - You should prepare metadata before you calculate speaker verification acceptance rate.
   ```
     python calculate_objective_metric.py \ 
       -d [data_dir] \ 
